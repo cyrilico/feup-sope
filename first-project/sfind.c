@@ -10,7 +10,7 @@
 #include "startup_functions.h"
 
 int main(int argc, char** argv){
-        if(!(argc >= MIN_ARGS && correct_arguments(argv))) { //Minimum number of arguments: program name, root directory, -name <name> | -type <type> | -perm <perm>, -print | -delete (exec takes more args)
+        if(!(argc >= MIN_ARGS && IS_OK(correct_arguments(argv)))) { //Minimum number of arguments: program name, root directory, -name <name> | -type <type> | -perm <perm>, -print | -delete (exec takes more args)
                 print_usage();
                 exit(-1);
         }
