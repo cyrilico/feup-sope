@@ -6,19 +6,31 @@
 //#include <fcntl.h>
 //#include <signal.h>
 //#include <sys/wait.h>
-#include "macros.h"
 #include "startup_functions.h"
 
+int stuff(struct dirent* cenas){
+  printf("Oi tudo bem\n");
+  return 0;
+}
+
 int main(int argc, char** argv){
-        if(!(argc >= MIN_ARGS && IS_OK(correct_arguments(argv)))) { //Minimum number of arguments: program name, root directory, -name <name> | -type <type> | -perm <perm>, -print | -delete (exec takes more args)
+        /* Minimum number of arguments (must be in this order!!):
+           program name, root directory to start search, -name <name> | -type <type> | -perm <perm>, -print | -delete (can be -exec but it takes more than the min args)
+         */
+        if(!(argc >= MIN_ARGS && IS_OK(correct_arguments(argv)))) {
                 print_usage();
                 exit(-1);
         }
         DIR* root_dir;
         if((root_dir = opendir(argv[1])) == NULL) {
-                printf("ERROR: Root search directory does not exist!\n");
+                fprintf(stderr,"Root search directory does not exist!\n");
                 exit(-1);
         }
-        printf("Good job\n");
+
+        /* Testing if set_matching_function is working (it is) */
+        fileMatchFunction f1;
+        set_matching_function(&f1,argv[2],argv[3]);
+        (*f1)(NULL);
         exit(0);
+
 }
