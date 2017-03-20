@@ -1,2 +1,2 @@
 # feup-sope
-Code developed for Operatin Systems (SOPE), a subject in MIEIC (FEUP)
+Code developed for Operating Systems (SOPE), a subject in MIEIC (FEUP)
