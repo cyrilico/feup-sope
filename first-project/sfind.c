@@ -13,7 +13,7 @@
 #include "signal_functions.h"
 #include "macros.h"
 
-static fileMatchFunction match_file;
+static fileMatchFunction match_func;
 
 int recursive_directory_search(DIR* root_directory, char* current_path_name){
         struct dirent* result;
@@ -28,7 +28,7 @@ int recursive_directory_search(DIR* root_directory, char* current_path_name){
                                    leaving only match_file function testing, but leave 'else if' (as an if) below
                                  */
                                 if(S_ISREG(result2.st_mode)) {
-                                        if(IS_OK((*match_file)(result)))
+                                        if(IS_OK((*match_func)(result, copyForLstat)))
                                                 printf("MATCHED: %s\n\n", copyForLstat);
                                 }
                                 else if(S_ISDIR(result2.st_mode)) {

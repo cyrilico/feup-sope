@@ -2,7 +2,7 @@
 
 #include <dirent.h>
 
-typedef int (*fileMatchFunction)(struct dirent*);
+typedef int (*fileMatchFunction)(struct dirent*, char*);
 
 int notDotorDotDot(const char* str);
 
