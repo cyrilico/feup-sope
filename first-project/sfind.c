@@ -7,7 +7,7 @@
 #include <sys/types.h>
 //#include <fcntl.h>
 #include <signal.h>
-//#include <sys/wait.h>
+#include <sys/wait.h>
 #include "startup_functions.h"
 #include "file_processing.h"
 #include "signal_functions.h"
@@ -24,19 +24,29 @@ int recursive_directory_search(DIR* root_directory, char* current_path_name){
                         char* copyForLstat = (char*)malloc(256);
                         strcpy(copyForLstat, current_path_name);
                         if(IS_OK(lstat(strcat(copyForLstat,result->d_name), &result2))) {
-                                /* Possibly remove this (for when using -type d as identifier),
-                                   leaving only match_file function testing, but leave 'else if' (as an if) below
-                                 */
-                              //  if(S_ISREG(result2.st_mode)) {
-                                        if(IS_OK((*match_func)(result, copyForLstat)))
-                                                printf("MATCHED: %s\n", copyForLstat);
-                              //  }
+                                if(IS_OK((*match_func)(result, copyForLstat)))
+                                        printf("MATCHED: %s\n", copyForLstat);
                                 if(S_ISDIR(result2.st_mode)) {
-                                        char* copyForRecursion = (char*)malloc(256);
-                                        strcpy(copyForRecursion, copyForLstat);
-                                        //printf("Found sub-directory, starting all over in it\n\n");
-                                        recursive_directory_search(opendir(copyForRecursion),copyForRecursion);
-                                        free(copyForRecursion);
+                                        pid_t pid = fork();
+                                        if(pid < 0) {
+                                                /* TODO: Errr... Maybe do something else here */
+                                                printf("COULDN'T CREATE NEW PROCCESS, SKIPPING SUB-DIRECTORY\n");
+                                                continue;
+                                        }
+                                        else if(pid == 0) {
+                                                char* copyForRecursion = (char*)malloc(256);
+                                                strcpy(copyForRecursion, copyForLstat);
+                                                //printf("FOUND SUB-DIRECTORY. I'M PROCESS %d. STARTING ALL OVER AGAIN\n", getpid());
+                                                recursive_directory_search(opendir(copyForRecursion),copyForRecursion);
+                                                free(copyForRecursion);
+                                                exit(0); //New process just handles this directory (just like each process only handles 1 directory)
+                                        }
+                                        else{
+                                                //Will block parent while he waits for children process to finish, but that's exactly what we want (finish current entry before checking the next one)
+                                                int status;
+                                                wait(&status);
+                                                //printf("I'M PROCESS %d. MY SON JUST TERMINATED WITH EXIT CODE %d\n\n", getpid(), WEXITSTATUS(status));
+                                        }
                                 }
                         }
                         else

@@ -8,9 +8,9 @@
 
 /* Don't really want to do anything with SIGCHLD signal */
 void sig_chld_handler(int signo){
-  int termination_status;
-  waitpid(-1, &termination_status, WNOHANG);
-  printf("A CHILD FROM PROCESS %d JUST TERMINATED WITH EXIT CODE %d\n", getpid(), WEXITSTATUS(termination_status));
+  //int termination_status;
+  //waitpid(-1, &termination_status, WNOHANG);
+  //printf("A CHILD FROM PROCESS %d JUST TERMINATED WITH EXIT CODE %d\n", getpid(), WEXITSTATUS(termination_status));
 }
 
 void install_sigchld_handler(){
