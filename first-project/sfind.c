@@ -7,9 +7,10 @@
 //#include <signal.h>
 //#include <sys/wait.h>
 #include "startup_functions.h"
+#include "file_processing.h"
+#include "signal_functions.h"
 
-int stuff(struct dirent* cenas){
-  printf("Oi tudo bem\n");
+int recursive_directory_search(DIR* root_directory){
   return 0;
 }
 
@@ -26,6 +27,8 @@ int main(int argc, char** argv){
                 fprintf(stderr,"Root search directory does not exist!\n");
                 exit(-1);
         }
+
+        install_sigchld_handler();
 
         /* Testing if set_matching_function is working (it is) */
         fileMatchFunction f1;
