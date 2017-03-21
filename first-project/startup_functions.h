@@ -1,7 +1,5 @@
 #pragma once
 
-#include "macros.h"
-
 /* Shows user the correct program call */
 void print_usage();
 

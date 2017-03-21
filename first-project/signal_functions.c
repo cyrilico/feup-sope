@@ -45,4 +45,21 @@ void install_sigusr1_handler(){
   }
 }
 
-/* To be implemented only in the 'main' parent process: if he receives this signal, it only terminates, as we're not interested in killing it's parent process */ 
+/* To be implemented only in the 'main' parent process: if he receives this signal, it only terminates, as we're not interested in killing it's parent process */
+void sig_super_usr1_handler(int signo){
+  printf("I'M PROCESS %d AND I'M TERMINATING\n", getpid());
+  exit(0);
+}
+
+void install_super_sigusr1_handler(){
+  struct sigaction act;
+
+  sigemptyset(&act.sa_mask);
+  act.sa_flags = 0;
+  act.sa_handler = sig_super_usr1_handler;
+
+  if(!IS_OK(sigaction(SIGUSR1, &act, NULL))){
+    perror("Super SIGUSR1 Handler");
+    exit(-1);
+  }
+}
