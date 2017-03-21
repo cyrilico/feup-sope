@@ -27,14 +27,14 @@ int recursive_directory_search(DIR* root_directory, char* current_path_name){
                                 /* Possibly remove this (for when using -type d as identifier),
                                    leaving only match_file function testing, but leave 'else if' (as an if) below
                                  */
-                                if(S_ISREG(result2.st_mode)) {
+                              //  if(S_ISREG(result2.st_mode)) {
                                         if(IS_OK((*match_func)(result, copyForLstat)))
-                                                printf("MATCHED: %s\n\n", copyForLstat);
-                                }
-                                else if(S_ISDIR(result2.st_mode)) {
+                                                printf("MATCHED: %s\n", copyForLstat);
+                              //  }
+                                if(S_ISDIR(result2.st_mode)) {
                                         char* copyForRecursion = (char*)malloc(256);
                                         strcpy(copyForRecursion, copyForLstat);
-                                        printf("Found sub-directory, starting all over in it\n\n");
+                                        //printf("Found sub-directory, starting all over in it\n\n");
                                         recursive_directory_search(opendir(copyForRecursion),copyForRecursion);
                                         free(copyForRecursion);
                                 }
@@ -43,10 +43,10 @@ int recursive_directory_search(DIR* root_directory, char* current_path_name){
                                 printf("ERROR IN LSTAT FOR %s\n\n", result->d_name);
                         free(copyForLstat);
                 }
-                else
-                        printf("Comparison failed, so this is . or ..\n\n");
+                /*else
+                        printf("Comparison failed, so this is . or ..\n\n");*/
         }
-        printf("Finished processing current directory\n\n");
+        /*printf("Finished processing current directory\n\n");*/
         return 0;
 }
 
@@ -68,7 +68,7 @@ int main(int argc, char** argv){
         install_super_sigusr1_handler(); //Every process will override this handler
 
         /* Testing if set_matching_function is working */
-        set_matching_function(&match_file,argv[2],argv[3]);
+        set_matching_function(&match_func,argv[2],argv[3]);
 
         char* stuff = (char*)malloc(1024);
         strcpy(stuff, argv[1]);
