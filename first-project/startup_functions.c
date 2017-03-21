@@ -11,7 +11,7 @@ void print_usage(){
 }
 
 static int equals(const char* comparedTo, const char* toCompare){
-        return strncmp(comparedTo, toCompare, strlen(toCompare)) == OK;
+        return strcmp(comparedTo, toCompare) == OK;
 }
 
 int correct_arguments(char** argv){
