@@ -7,7 +7,7 @@
 #include "startup_functions.h"
 
 void print_usage(){
-        printf("USAGE: ./sfind (-name <filename> | -type <filetype> | -perm <file permissions>) (-print | -delete | -exec <command> [{}] ;)\n");
+        printf("USAGE: ./sfind root_search_directory (-name <filename> | -type <filetype> | -perm <file permissions>) (-print | -delete | -exec <command> [{}] ;)\n");
 }
 
 static int equals(const char* comparedTo, const char* toCompare){

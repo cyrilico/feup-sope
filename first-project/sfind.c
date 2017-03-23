@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <sys/types.h>
-//#include <fcntl.h>
 #include <signal.h>
 #include <sys/wait.h>
 #include "startup_functions.h"
@@ -14,18 +13,20 @@
 #include "macros.h"
 
 static fileMatchFunction match_func;
+static fileActionFunction action_func;
 
 int recursive_directory_search(DIR* root_directory, char* current_path_name){
         struct dirent* result;
         strcat(current_path_name, "/");
         while((result = readdir(root_directory)) != NULL) {
                 struct stat result2;
-                if(IS_OK(notDotorDotDot(result->d_name))) {
+                if(IS_OK(notDotOrDotDot(result->d_name))) {
                         char* copyForLstat = (char*)malloc(256);
                         strcpy(copyForLstat, current_path_name);
                         if(IS_OK(lstat(strcat(copyForLstat,result->d_name), &result2))) {
                                 if(IS_OK((*match_func)(result, copyForLstat)))
-                                        printf("MATCHED: %s\n", copyForLstat);
+                                        if(IS_OK((*action_func)(result, copyForLstat)))
+                                                printf("ACTION EXECUTED SUCCESSFULLY\n");
                                 if(S_ISDIR(result2.st_mode)) {
                                         pid_t pid = fork();
                                         if(pid < 0) {
@@ -77,8 +78,11 @@ int main(int argc, char** argv){
         install_sigchld_handler(); //Every process will inherit this handler
         install_super_sigusr1_handler(); //Every process will override this handler
 
-        /* Testing if set_matching_function is working */
+        /* Assigning entry matching function */
         set_matching_function(&match_func,argv[2],argv[3]);
+
+        /* Assigning matched entries action function */
+        set_action_function(&action_func, argv[4], (argv+5));
 
         char* stuff = (char*)malloc(1024);
         strcpy(stuff, argv[1]);
