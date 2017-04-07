@@ -32,7 +32,6 @@ int recursive_directory_search(DIR* root_directory, char* current_path_name){
                                 if(S_ISDIR(result2.st_mode)) {
                                         pid_t pid = fork();
                                         if(pid < 0) {
-                                                /* TODO: Errr... Maybe do something else here */
                                                 printf("COULDN'T CREATE NEW PROCCESS, SKIPPING SUB-DIRECTORY\n");
                                                 continue;
                                         }

@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <sys/wait.h>
 #include "macros.h"
 #include "file_processing.h"
 
@@ -103,7 +105,30 @@ int delete_file(struct dirent* current, char* current_path){
 }
 
 int exec_command(struct dirent* current, char* current_path){
-        printf("RECEIVED EXEC FOR %s\n", current_path);
+        int i = 0;
+        while(desired_command_args[i] != NULL){
+          if(IS_OK(strcmp(desired_command_args[i], "{}")))
+            desired_command_args[i] = current_path;
+          i++;
+        }
+        /*i = 0;
+        while(desired_command_args[i] != NULL){
+          printf("ARG%d: %s\n", i, desired_command_args[i]);
+          i++;
+        }*/
+        pid_t pid;
+        if((pid = fork()) < 0){
+          printf("Couldn't execute desired command on current file!\n");
+          exit(-1);
+        }
+        else if(pid == 0){
+          if(execvp(desired_command_args[0], desired_command_args) == ERROR)
+            return ERROR;
+        }
+        else{
+          waitpid(pid, NULL, 0);
+          return OK;
+        }
         return OK;
 }
 
