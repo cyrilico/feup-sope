@@ -6,7 +6,7 @@
 #include "file_processing.h"
 
 static int equals(const char* comparedTo, const char* toCompare){
-        return strncmp(comparedTo, toCompare, strlen(toCompare)) == OK;
+        return strncmp(comparedTo, toCompare, strlen(comparedTo)) == OK;
 }
 
 int notDotOrDotDot(const char* str){

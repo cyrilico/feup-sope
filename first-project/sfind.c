@@ -25,8 +25,10 @@ int recursive_directory_search(DIR* root_directory, char* current_path_name){
                         strcpy(copyForLstat, current_path_name);
                         if(IS_OK(lstat(strcat(copyForLstat,result->d_name), &result2))) {
                                 if(IS_OK((*match_func)(result, copyForLstat)))
-                                        if(IS_OK((*action_func)(result, copyForLstat)))
-                                                printf("ACTION EXECUTED SUCCESSFULLY\n");
+                                        if(!IS_OK((*action_func)(result, copyForLstat))){
+                                          printf("ERROR EXECUTING ACTION FOR %s. EXITING\n", copyForLstat);
+                                          exit(-1);
+                                        }
                                 if(S_ISDIR(result2.st_mode)) {
                                         pid_t pid = fork();
                                         if(pid < 0) {
@@ -43,11 +45,11 @@ int recursive_directory_search(DIR* root_directory, char* current_path_name){
                                                 exit(0); //New process just handles this directory (just like each process only handles 1 directory)
                                         }
                                         else{
-                                                //Will block parent while he waits for children process to finish, but that's exactly what we want (finish current entry before checking the next one)
                                                 int status;
-                                                wait(&status);
-                                                //printf("I'M PROCESS %d. MY SON JUST TERMINATED WITH EXIT CODE %d\n\n", getpid(), WEXITSTATUS(status));
+                                                waitpid(pid, &status, 0);
+                                              //printf("I'M PROCESS %d. MY SON JUST TERMINATED WITH EXIT CODE %d\n\n", getpid(), WEXITSTATUS(status));
                                         }
+
                                 }
                         }
                         else
@@ -75,19 +77,16 @@ int main(int argc, char** argv){
                 exit(-1);
         }
 
-        install_sigchld_handler(); //Every process will inherit this handler
-        install_super_sigusr1_handler(); //Every process will override this handler
-
         /* Assigning entry matching function */
         set_matching_function(&match_func,argv[2],argv[3]);
 
         /* Assigning matched entries action function */
         set_action_function(&action_func, argv[4], (argv+5));
 
-        char* stuff = (char*)malloc(1024);
-        strcpy(stuff, argv[1]);
-        if(IS_OK(recursive_directory_search(root_dir, stuff))) ;
-        printf("Good job\n");
+        char* full_path_holder = (char*)malloc(1024);
+        strcpy(full_path_holder, argv[1]);
+        if(IS_OK(recursive_directory_search(root_dir, full_path_holder)))
+          printf("Good job\n");
+        while(IS_OK(waitpid(-1, NULL, WNOHANG)));
         exit(0);
-
 }
