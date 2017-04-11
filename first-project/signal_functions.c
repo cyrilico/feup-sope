@@ -19,6 +19,8 @@ int confirm_termination(){
         printf("%d : Are you sure you want to terminate (Y/N)? ", getpid());
         char answer;
         scanf("%c", &answer);
+        char c; while((c = getchar()) != '\n' && c != EOF) ; //Clear stdin
+
         if(answer == 'Y' || answer == 'y')
                 return OK;
         else{
@@ -32,7 +34,7 @@ void sigint_handler(int signo){
         if(IS_OK(confirm_termination())) {
                 char groupid[256];
                 sprintf(groupid, "-%d", getpgrp());
-                execlp("kill", "kill", groupid, NULL);
+                execlp("kill", "kill", "-9", groupid, NULL); //Kill with SIGTERM signal
         }
 }
 
