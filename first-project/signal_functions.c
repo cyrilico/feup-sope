@@ -16,10 +16,10 @@ int flag_is_set(){
 }
 
 int confirm_termination(){
-        printf("%d : Are you sure you want to terminate (Y/N)? ", getpid());
+        while(wait(NULL) != ERROR){}
+        printf("%d : Are you sure you want to terminate (Y/N)? \n", getpid());
         char answer;
         scanf("%c", &answer);
-        char c; while((c = getchar()) != '\n' && c != EOF) ; //Clear stdin
 
         if(answer == 'Y' || answer == 'y')
                 return OK;
@@ -31,11 +31,10 @@ int confirm_termination(){
 
 void sigint_handler(int signo){
         toggle_termination_flag();
-        if(IS_OK(confirm_termination())) {
-                char groupid[256];
-                sprintf(groupid, "-%d", getpgrp());
-                execlp("kill", "kill", "-9", groupid, NULL); //Kill with SIGTERM signal
-        }
+}
+
+void sigchld_handler(int signo){
+        wait(NULL);
 }
 
 int install_sigint_handler(){
@@ -44,4 +43,12 @@ int install_sigint_handler(){
         temp.sa_flags = 0;
         sigfillset(&temp.sa_mask);
         return IS_OK(sigaction(SIGINT, &temp, NULL)) ? OK : ERROR;
+}
+
+int install_sigchld_handler(){
+        struct sigaction temp;
+        temp.sa_handler = sigchld_handler;
+        temp.sa_flags = 0;
+        sigfillset(&temp.sa_mask);
+        return IS_OK(sigaction(SIGCHLD, &temp, NULL)) ? OK : ERROR;
 }
