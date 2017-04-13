@@ -15,10 +15,6 @@
 static fileMatchFunction match_func;
 static fileActionFunction action_func;
 
-void cenas(int i){
-  pause();
-}
-
 int recursive_directory_search(DIR* root_directory, char* current_path_name){
         struct dirent* result;
         if(current_path_name[strlen(current_path_name)-1] != '/')
@@ -45,9 +41,10 @@ int recursive_directory_search(DIR* root_directory, char* current_path_name){
                                                 strcpy(copyForRecursion, copyForLstat);
                                                 recursive_directory_search(opendir(copyForRecursion),copyForRecursion);
                                                 free(copyForRecursion);
-                                                exit(0);//return 0;
+                                                exit(0);
                                         }
                                         else{
+                                                //LEAVE OR DELETE?
                                                 int status;
                                                 waitpid(pid, &status, 0);
                                         }
@@ -97,6 +94,6 @@ int main(int argc, char** argv){
         char* full_path_holder = (char*)malloc(1024);
         strcpy(full_path_holder, argv[1]);
         if(!IS_OK(recursive_directory_search(root_dir, full_path_holder)))
-              printf("Fodeu\n");
+              printf("Search for %s went wrong!\n", full_path_holder);
         exit(0);
 }
