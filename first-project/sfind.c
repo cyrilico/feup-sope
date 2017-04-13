@@ -15,15 +15,19 @@
 static fileMatchFunction match_func;
 static fileActionFunction action_func;
 
-void cenas(int i){
-  pause();
-}
-
 int recursive_directory_search(DIR* root_directory, char* current_path_name){
         struct dirent* result;
         if(current_path_name[strlen(current_path_name)-1] != '/')
                 strcat(current_path_name, "/");
-        while((result = readdir(root_directory)) != NULL && !IS_OK(flag_is_set())) {
+        while((result = readdir(root_directory)) != NULL) {
+                /*if(IS_OK(flag_is_set())) {
+                        if(IS_OK(confirm_termination())){
+                          wait(NULL);
+                          char groupid[256];
+                          sprintf(groupid, "-%d", getpgrp());
+                          execlp("kill", "kill", groupid, NULL);
+                        }
+                   }*/
                 struct stat result2;
                 if(IS_OK(notDotOrDotDot(result->d_name))) {
                         char* copyForLstat = (char*)malloc(256);
@@ -31,8 +35,8 @@ int recursive_directory_search(DIR* root_directory, char* current_path_name){
                         if(IS_OK(lstat(strcat(copyForLstat,result->d_name), &result2))) {
                                 if(IS_OK((*match_func)(result, copyForLstat)))
                                         if(!IS_OK((*action_func)(result, copyForLstat))) {
-                                                printf("ERROR EXECUTING ACTION FOR %s\n", copyForLstat);
-                                                continue;
+                                                printf("ERROR EXECUTING ACTION FOR %s. EXITING\n", copyForLstat);
+                                                exit(-1);
                                         }
                                 if(S_ISDIR(result2.st_mode)) {
                                         pid_t pid = fork();
@@ -41,15 +45,22 @@ int recursive_directory_search(DIR* root_directory, char* current_path_name){
                                                 continue;
                                         }
                                         else if(pid == 0) {
+                                                struct sigaction temp;
+                                                temp.sa_handler = SIG_IGN;
+                                                temp.sa_flags = 0;
+                                                sigemptyset(&temp.sa_mask);
+                                                sigaction(SIGINT, &temp, NULL);
                                                 char* copyForRecursion = (char*)malloc(256);
                                                 strcpy(copyForRecursion, copyForLstat);
+                                                //printf("FOUND SUB-DIRECTORY. I'M PROCESS %d. STARTING ALL OVER AGAIN\n", getpid());
                                                 recursive_directory_search(opendir(copyForRecursion),copyForRecursion);
                                                 free(copyForRecursion);
-                                                exit(0);//return 0;
+                                                exit(0); //New process just handles this directory (just like each process only handles 1 directory)
                                         }
                                         else{
                                                 int status;
                                                 waitpid(pid, &status, 0);
+                                                //printf("I'M PROCESS %d. MY SON JUST TERMINATED WITH EXIT CODE %d\n\n", getpid(), WEXITSTATUS(status));
                                         }
 
                                 }
@@ -58,15 +69,10 @@ int recursive_directory_search(DIR* root_directory, char* current_path_name){
                                 printf("ERROR IN LSTAT FOR %s\n\n", result->d_name);
                         free(copyForLstat);
                 }
+                /*else
+                        printf("Comparison failed, so this is . or ..\n\n");*/
         }
-        if(IS_OK(flag_is_set())) {
-                if(IS_OK(confirm_termination())){
-                  char groupid[256];
-                  sprintf(groupid, "-%d", getpgrp());
-                  execlp("kill", "kill", "-s", "TERM", groupid, NULL);
-                }
-        }
-        closedir(root_directory);
+        /*printf("Finished processing current directory\n\n");*/
         return 0;
 }
 
@@ -90,13 +96,13 @@ int main(int argc, char** argv){
         /* Assigning matched entries action function */
         set_action_function(&action_func, argv[4], (argv+5));
 
-        /* Install signal handlers */
-        if(!IS_OK(install_sigint_handler()) || !IS_OK(install_sigchld_handler()))
+        if(!IS_OK(install_sigint_handler()))
                 exit(-1);
 
         char* full_path_holder = (char*)malloc(1024);
         strcpy(full_path_holder, argv[1]);
-        if(!IS_OK(recursive_directory_search(root_dir, full_path_holder)))
-              printf("Fodeu\n");
+        if(IS_OK(recursive_directory_search(root_dir, full_path_holder)))
+                printf("Good job\n");
+        //while(wait(NULL) != ERROR) ;
         exit(0);
 }
