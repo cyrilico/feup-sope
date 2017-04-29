@@ -1,2 +1,3 @@
 # feup-sope
-Code developed for Operating Systems (SOPE), a subject in MIEIC (FEUP)
+Second project for Operating Systems course. A unisex sauna system simulation
+(more details to be added)
