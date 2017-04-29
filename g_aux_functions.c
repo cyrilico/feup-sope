@@ -2,9 +2,13 @@
 #include <stdio.h>
 #include "g_aux_functions.h"
 
-generator_info general_info;
+static generator_info general_info;
 
-int sequential_serial_number = 0;
+static int sequential_serial_number = 0;
+
+int get_nr_requests(){
+  return general_info.number_of_requests;
+}
 
 int read_requests_info(char** argv){
   unsigned long max_requests = strtoul(argv[1], NULL, 10);

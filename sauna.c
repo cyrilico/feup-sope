@@ -5,16 +5,24 @@
 #include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include "s_aux_functions.h"
 #include "s_macros.h"
 
 int main(int argc, char** argv){
-        //TODO: Read initial program information from argv
+        if(argc < 2){
+          printf("Sauna: Incorrect number of arguments\n");
+          exit(ERROR);
+        }
+        else if(read_capacity(argv[1]) == ERROR){
+          printf("Sauna: Incorrect capacity specified\n");
+          exit(ERROR);
+        }
 
         /* Create communication FIFOs */
         //TODO: Change to more fitting permissions
         if(mkfifo("/tmp/entrada", 0777) != OK) {
                 if(errno != EEXIST) { //EEXIST would mean that couldn't make FIFO but only because it already exists
-                        printf("ERROR: %s\n", strerror(errno));
+                        printf("Sauna: %s\n", strerror(errno));
                         exit(ERROR);
                 }
         }
@@ -22,7 +30,7 @@ int main(int argc, char** argv){
         //TODO: Change to more fitting permissions
         if(mkfifo("/tmp/rejeitados", 0777) != OK) {
                 if(errno != EEXIST) { //EEXIST would mean that couldn't make FIFO but only because it already exists
-                        printf("ERROR: %s\n", strerror(errno));
+                        printf("Sauna: %s\n", strerror(errno));
                         exit(ERROR);
                 }
         }
@@ -31,7 +39,7 @@ int main(int argc, char** argv){
 
         int requests_received_fd;
         if((requests_received_fd = open("/tmp/entrada", O_RDONLY)) == ERROR){
-          printf("ERROR: %s\n", strerror(errno));
+          printf("Sauna: %s\n", strerror(errno));
           exit(ERROR);
         }
 

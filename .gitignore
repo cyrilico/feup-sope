@@ -1,3 +1,7 @@
+# This specific project's executables
+gerador
+sauna
+
 # Prerequisites
 *.d
 
