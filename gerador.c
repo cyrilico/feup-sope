@@ -40,6 +40,12 @@ int main(int argc, char** argv){
         }
 
         close(requests_sent_fd);
+
+        char msg[100];
+        int status;
+        while((status = read(requests_rejected_fd, msg, 100)), status > 0)
+                printf("%s\n", msg);
+
         close(requests_rejected_fd);
         exit(OK);
 }
