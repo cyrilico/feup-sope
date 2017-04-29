@@ -13,7 +13,7 @@ int main(int argc, char** argv){
         /* Create communication FIFOs */
         //TODO: Change to more fitting permissions
         if(mkfifo("/tmp/entrada", 0777) != OK) {
-                if(errno != EEXIST) {
+                if(errno != EEXIST) { //EEXIST would mean that couldn't make FIFO but only because it already exists
                         printf("ERROR: %s\n", strerror(errno));
                         exit(ERROR);
                 }
@@ -21,7 +21,7 @@ int main(int argc, char** argv){
 
         //TODO: Change to more fitting permissions
         if(mkfifo("/tmp/rejeitados", 0777) != OK) {
-                if(errno != EEXIST) {
+                if(errno != EEXIST) { //EEXIST would mean that couldn't make FIFO but only because it already exists
                         printf("ERROR: %s\n", strerror(errno));
                         exit(ERROR);
                 }
@@ -30,7 +30,7 @@ int main(int argc, char** argv){
         printf("SAUNA: FIFOS CREATED\n");
 
         int requests_received_fd;
-        if((requests_received_fd = open("/tmp/entrada", O_RDONLY | O_NONBLOCK)) == ERROR){
+        if((requests_received_fd = open("/tmp/entrada", O_RDONLY)) == ERROR){
           printf("ERROR: %s\n", strerror(errno));
           exit(ERROR);
         }
@@ -40,7 +40,15 @@ int main(int argc, char** argv){
           sleep(1);
 
         printf("SAUNA: BOTH FIFOS OPEN\n");
+        printf("SAUNA FD'S. ENTRADA: %d REJEITADOS: %d\n", requests_received_fd, requests_rejected_fd);
 
+        request_info* received = (request_info*)(malloc(sizeof(request_info)));
+        int status;
+        while((status = read(requests_received_fd, received, sizeof(request_info))), status > 0)
+          printf("REQUEST RECEIVED. Serial nr.%d, expected usage time %d, gender %c\n", received->serial_number, received->usage_time, received->gender);
 
+        free(received);
+        close(requests_received_fd);
+        close(requests_rejected_fd);
         exit(0);
 }

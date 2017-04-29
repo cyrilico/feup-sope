@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "g_aux_functions.h"
 
 generator_info general_info;
