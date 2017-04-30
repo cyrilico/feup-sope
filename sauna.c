@@ -1,10 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <errno.h>
 #include <unistd.h>
-#include <fcntl.h>
 #include <time.h>
 #include "s_aux_functions.h"
 #include "s_macros.h"
@@ -20,37 +18,16 @@ int main(int argc, char** argv){
                 exit(ERROR);
         }
 
-        /* Create communication FIFOs */
-        mode_t permissions = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP; //Read and write for file owner and group owner
-
-        if(mkfifo("/tmp/entrada", permissions) != OK) {
-                if(errno != EEXIST) { //EEXIST would mean that couldn't make FIFO but only because it already exists
-                        printf("Sauna: %s\n", strerror(errno));
-                        exit(ERROR);
-                }
-        }
-
-        if(mkfifo("/tmp/rejeitados", permissions) != OK) {
-                if(errno != EEXIST) { //EEXIST would mean that couldn't make FIFO but only because it already exists
-                        printf("Sauna: %s\n", strerror(errno));
-                        exit(ERROR);
-                }
-        }
+        if(create_fifos() == ERROR)
+                exit(ERROR);
 
         printf("SAUNA: FIFOS CREATED\n");
 
-        int requests_received_fd;
-        if((requests_received_fd = open("/tmp/entrada", O_RDONLY)) == ERROR) {
-                printf("Sauna: %s\n", strerror(errno));
+        int requests_received_fd, requests_rejected_fd;
+        if(open_fifos(&requests_received_fd, &requests_rejected_fd) == ERROR)
                 exit(ERROR);
-        }
 
-        int requests_rejected_fd;
-        while(((requests_rejected_fd = open("/tmp/rejeitados", O_WRONLY | O_SYNC)) == ERROR))
-                sleep(1);
-
-        printf("SAUNA: BOTH FIFOS OPEN\n");
-        printf("SAUNA FD'S. ENTRADA: %d REJEITADOS: %d\n", requests_received_fd, requests_rejected_fd);
+        printf("SAUNA: BOTH FIFOS OPEN. RECEIVED %d, REJECTED %d\n", requests_received_fd, requests_rejected_fd);
 
         request_info* received[10];
         int index = 0;
@@ -73,7 +50,7 @@ int main(int argc, char** argv){
         for(index = 9; index >= 0; index--) {
                 if(received[index] != NULL) {
                         char msg[100];
-                        sprintf(msg, "REQUEST %d REJECTED\n", received[index]->serial_number);
+                        sprintf(msg, "REQUEST REJECTED. Serial nr.%d, expected usage time %d, gender %c\n", received[index]->serial_number, received[index]->usage_time, received[index]->gender);
                         if(write(requests_rejected_fd, msg, strlen(msg)) == ERROR)
                                 printf("Sauna: %s\n", strerror(errno));
                         sleep(1);
@@ -82,5 +59,5 @@ int main(int argc, char** argv){
 
         close(requests_rejected_fd);
 
-        exit(0);
+        exit(OK);
 }

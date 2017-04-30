@@ -7,4 +7,4 @@ sauna: s_aux_functions.c sauna.c
 	cc -Wall -o sauna sauna.c s_aux_functions.c
 
 clean:
-	rm gerador sauna
+	rm -f gerador sauna
