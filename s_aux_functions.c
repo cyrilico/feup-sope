@@ -8,7 +8,7 @@
 #include "s_macros.h"
 #include "s_aux_functions.h"
 
-static int capacity;
+static sauna_info general_info;
 
 int read_capacity(char* arg){
         unsigned long capacity_desired = strtoul(arg, NULL, 10);
@@ -16,13 +16,13 @@ int read_capacity(char* arg){
         if(capacity_desired == 0)
                 return ERROR;
 
-        capacity = capacity_desired;
+        general_info.capacity = capacity_desired;
 
         return OK;
 }
 
 int get_capacity(){
-        return capacity;
+        return general_info.capacity;
 }
 
 int create_fifos(){
@@ -45,14 +45,37 @@ int create_fifos(){
         return OK;
 }
 
-int open_fifos(int* requests_received_fd, int* requests_rejected_fd){
-        if((*requests_received_fd = open("/tmp/entrada", O_RDONLY)) == ERROR) {
+int open_fifos(){
+        if((general_info.requests_received_fd = open("/tmp/entrada", O_RDONLY)) == ERROR) {
                 printf("Sauna: %s\n", strerror(errno));
                 return ERROR;
         }
 
-        while(((*requests_rejected_fd = open("/tmp/rejeitados", O_WRONLY | O_SYNC)) == ERROR))
+        while((general_info.requests_rejected_fd = open("/tmp/rejeitados", O_WRONLY | O_SYNC)) == ERROR)
                 sleep(1);
 
+        printf("Sauna: Received | Rejected: %d | %d\n", general_info.requests_received_fd, general_info.requests_rejected_fd);
         return OK;
+}
+
+int read_request(request_info* request){
+  if(read(general_info.requests_received_fd, request, sizeof(request_info)) > 0)
+    return OK;
+  return ERROR;
+}
+
+int send_rejected(request_info* rejected){
+  if(write(general_info.requests_rejected_fd, rejected, sizeof(request_info)) == ERROR)
+    return ERROR;
+  return OK;
+}
+
+void close_entry_fd(){
+  printf("Sauna: Closing entry fd\n");
+  close(general_info.requests_received_fd);
+}
+
+void close_rejected_fd(){
+  printf("Sauna: Closing rejected fd\n");
+  close(general_info.requests_rejected_fd);
 }

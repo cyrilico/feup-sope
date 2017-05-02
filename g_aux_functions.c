@@ -47,14 +47,55 @@ request_info* generate_request(){
         return result;
 }
 
-int open_fifos(int* requests_sent_fd, int* requests_rejected_fd){
-        while(((*requests_sent_fd = open("/tmp/entrada", O_WRONLY | O_SYNC)) == ERROR))
+int open_fifos(){
+        while((general_info.requests_sent_fd = open("/tmp/entrada", O_WRONLY | O_SYNC)) == ERROR)
                 sleep(1);
 
-        if((*requests_rejected_fd = open("/tmp/rejeitados", O_RDONLY)) == ERROR) {
+        if((general_info.requests_rejected_fd = open("/tmp/rejeitados", O_RDONLY)) == ERROR) {
                 printf("Gerador: %s\n", strerror(errno));
                 return ERROR;
         }
 
+        printf("Gerador: Received | Rejected: %d | %d\n", general_info.requests_sent_fd, general_info.requests_rejected_fd);
         return OK;
+}
+
+int open_statistics_file(){
+  char file[50];
+  sprintf(file, "/tmp/ger.%d", getpid());
+  if((general_info.statistics_fd = open(file, O_WRONLY | O_CREAT | O_EXCL | O_SYNC)) == ERROR)
+    return ERROR;
+  return OK;
+}
+
+int send_request(request_info* request){
+  if(write(general_info.requests_sent_fd, request, sizeof(request_info)) == ERROR)
+    return ERROR;
+  return OK;
+}
+
+int read_reject(request_info* rejected){
+  if(read(general_info.requests_rejected_fd, rejected, sizeof(request_info))  <= 0)
+    return ERROR;
+  return OK;
+}
+
+int write_to_statistics(char* str){
+  if(write(general_info.statistics_fd, str, strlen(str)) == ERROR)
+    return ERROR;
+  return OK;
+}
+
+void close_entry_fd(){
+  printf("Gerador: closing entry fd\n");
+  close(general_info.requests_sent_fd);
+}
+
+void close_rejected_fd(){
+  printf("Gerador: closing rejected fd\n");
+  close(general_info.requests_rejected_fd);
+}
+
+void close_statistics_fd(){
+  close(general_info.statistics_fd);
 }

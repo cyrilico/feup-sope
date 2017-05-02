@@ -21,22 +21,22 @@ int main(int argc, char** argv){
         if(create_fifos() == ERROR)
                 exit(ERROR);
 
-        printf("SAUNA: FIFOS CREATED\n");
+        printf("SAUNA-PID%d: FIFOS CREATED\n", getpid());
 
-        int requests_received_fd, requests_rejected_fd;
-        if(open_fifos(&requests_received_fd, &requests_rejected_fd) == ERROR)
+        if(open_fifos() == ERROR){
+          printf("Sauna: %s\n", strerror(errno));
                 exit(ERROR);
+              }
 
-        printf("SAUNA: BOTH FIFOS OPEN. RECEIVED %d, REJECTED %d\n", requests_received_fd, requests_rejected_fd);
+        printf("SAUNA-PID%d: BOTH FIFOS OPEN\n", getpid());
 
         request_info* received[10];
         int index = 0;
         for(; index < 10; index++)
                 received[index] = (request_info*)malloc(sizeof(request_info));
 
-        int status;
         index = 0;
-        while((status = read(requests_received_fd, received[index], sizeof(request_info))) > 0) {
+        while(read_request(received[index]) == OK) {
                 int reject = rand() % 10;
                 if(reject < 7) {
                         printf("REQUEST RECEIVED. Serial nr.%d, expected usage time %d, gender %c\n", received[index]->serial_number, received[index]->usage_time, received[index]->gender);
@@ -45,19 +45,17 @@ int main(int argc, char** argv){
                 index++;
         }
 
-        close(requests_received_fd);
+        close_entry_fd();
 
-        for(index = 9; index >= 0; index--) {
+        for(index = 0; index < 9; index++) {
                 if(received[index] != NULL) {
-                        char msg[100];
-                        sprintf(msg, "REQUEST REJECTED. Serial nr.%d, expected usage time %d, gender %c\n", received[index]->serial_number, received[index]->usage_time, received[index]->gender);
-                        if(write(requests_rejected_fd, msg, strlen(msg)) == ERROR)
+                        if(send_rejected(received[index]) == ERROR)
                                 printf("Sauna: %s\n", strerror(errno));
                         sleep(1);
                 }
         }
 
-        close(requests_rejected_fd);
+        close_rejected_fd();
 
         exit(OK);
 }
