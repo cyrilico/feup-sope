@@ -54,28 +54,27 @@ int open_fifos(){
         while((general_info.requests_rejected_fd = open("/tmp/rejeitados", O_WRONLY | O_SYNC)) == ERROR)
                 sleep(1);
 
-        printf("Sauna: Received | Rejected: %d | %d\n", general_info.requests_received_fd, general_info.requests_rejected_fd);
         return OK;
 }
 
 int read_request(request_info* request){
-  if(read(general_info.requests_received_fd, request, sizeof(request_info)) > 0)
-    return OK;
-  return ERROR;
+        if(read(general_info.requests_received_fd, request, sizeof(request_info)) > 0)
+                return OK;
+        return ERROR;
 }
 
 int send_rejected(request_info* rejected){
-  if(write(general_info.requests_rejected_fd, rejected, sizeof(request_info)) == ERROR)
-    return ERROR;
-  return OK;
+        if(write(general_info.requests_rejected_fd, rejected, sizeof(request_info)) == ERROR)
+                return ERROR;
+        return OK;
 }
 
 void close_entry_fd(){
-  printf("Sauna: Closing entry fd\n");
-  close(general_info.requests_received_fd);
+        printf("Sauna: Closing entry fd\n");
+        close(general_info.requests_received_fd);
 }
 
 void close_rejected_fd(){
-  printf("Sauna: Closing rejected fd\n");
-  close(general_info.requests_rejected_fd);
+        printf("Sauna: Closing rejected fd\n");
+        close(general_info.requests_rejected_fd);
 }

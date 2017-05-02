@@ -5,6 +5,7 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
+#include <assert.h>
 #include "g_aux_functions.h"
 
 int main(int argc, char** argv){
@@ -31,23 +32,27 @@ int main(int argc, char** argv){
 
         int i = get_number_of_requests();
         for(; i > 0; --i) {
-                request_info* temp = generate_request();
-                if(send_request(temp) == ERROR)
+                generate_request();
+                request_info* next_request = get_next_request();
+                if(send_request(next_request) == ERROR)
                         printf("Gerador: %s\n", strerror(errno));
                 char output[100];
-                sprintf(output, "REQUEST MADE. SERIAL NUMBER %d, USAGE TIME %d, GENDER %c\n", temp->serial_number, temp->usage_time, temp->gender);
+                sprintf(output, "REQUEST MADE. SERIAL NUMBER %d, USAGE TIME %d, GENDER %c\n", next_request->serial_number, next_request->usage_time, next_request->gender);
                 if(write_to_statistics(output) == ERROR)
                         printf("Gerador: %s\n", strerror(errno));
                 sleep(1);
         }
 
+        assert(get_queue_size() == 0);
+
         close_entry_fd();
         request_info stuff;
-        while(read_reject(&stuff) == OK){
-          char msg[100];
-          sprintf(msg, "REQUEST REJECTED. SERIAL NUMBER %d, USAGE TIME %d, GENDER %c\n", stuff.serial_number, stuff.usage_time, stuff.gender);
-          if(write_to_statistics(msg) == ERROR)
-                  printf("Gerador: %s\n", strerror(errno));
+        while(read_reject(&stuff) == OK) {
+                printf("Gerador: Processing rejected request %d\n", stuff.serial_number);
+                char msg[100];
+                sprintf(msg, "REQUEST REJECTED. SERIAL NUMBER %d, USAGE TIME %d, GENDER %c\n", stuff.serial_number, stuff.usage_time, stuff.gender);
+                if(write_to_statistics(msg) == ERROR)
+                        printf("Gerador: %s\n", strerror(errno));
         }
 
         close_statistics_fd();

@@ -1,9 +1,9 @@
-typedef struct{
-  int capacity;
+typedef struct {
+        int capacity;
 
-  int requests_received_fd;
-  int requests_rejected_fd;
-  int statistics_fd;
+        int requests_received_fd;
+        int requests_rejected_fd;
+        int statistics_fd;
 }sauna_info;
 
 typedef struct {

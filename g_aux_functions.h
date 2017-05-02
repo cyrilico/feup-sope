@@ -31,7 +31,7 @@ typedef struct {
 int read_requests_info(char** argv);
 int get_number_of_requests();
 
-request_info* generate_request();
+void generate_request();
 
 int open_fifos();
 int open_statistics_file();
@@ -43,3 +43,12 @@ int write_to_statistics(char* str); //TODO: Split into different functions to wr
 void close_entry_fd(); //TODO: Add verification to close() return value?
 void close_rejected_fd(); //TODO: Add verification to close() return value?
 void close_statistics_fd(); //TODO: Add verification to close() return value?
+
+typedef struct {
+        int first_index_free;
+        request_info** requests_queue;
+}requests_queue;
+
+request_info* get_next_request();
+void push_request(request_info* request);
+int get_queue_size(); //Necessary??

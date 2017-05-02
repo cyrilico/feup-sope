@@ -23,10 +23,10 @@ int main(int argc, char** argv){
 
         printf("SAUNA-PID%d: FIFOS CREATED\n", getpid());
 
-        if(open_fifos() == ERROR){
-          printf("Sauna: %s\n", strerror(errno));
+        if(open_fifos() == ERROR) {
+                printf("Sauna: %s\n", strerror(errno));
                 exit(ERROR);
-              }
+        }
 
         printf("SAUNA-PID%d: BOTH FIFOS OPEN\n", getpid());
 
@@ -37,18 +37,19 @@ int main(int argc, char** argv){
 
         index = 0;
         while(read_request(received[index]) == OK) {
-                int reject = rand() % 10;
-                if(reject < 7) {
+                //int reject = rand() % 10;
+                //if(reject < 7) {
                         printf("REQUEST RECEIVED. Serial nr.%d, expected usage time %d, gender %c\n", received[index]->serial_number, received[index]->usage_time, received[index]->gender);
-                        received[index] = NULL;
-                }
+                  //      received[index] = NULL;
+                //}
                 index++;
         }
 
         close_entry_fd();
 
-        for(index = 0; index < 9; index++) {
+        for(index = 0; index < 10; index++) {
                 if(received[index] != NULL) {
+                        printf("Sauna: Sending rejected back with serial number %d\n", received[index]->serial_number);
                         if(send_rejected(received[index]) == ERROR)
                                 printf("Sauna: %s\n", strerror(errno));
                         sleep(1);
