@@ -10,6 +10,17 @@
 
 static sauna_info general_info;
 
+#define NS_TO_MS(t) (t)/1e6
+
+long get_ms_since_startup(){
+        struct timespec current_time;
+        if(clock_gettime(CLOCK_REALTIME, &current_time) == ERROR) {
+                printf("Sauna: %s\n", strerror(errno));
+                return ERROR;
+        }
+        return NS_TO_MS(current_time.tv_nsec - general_info.starting_time.tv_nsec);
+}
+
 int read_capacity(char* arg){
         unsigned long capacity_desired = strtoul(arg, NULL, 10);
 
@@ -17,6 +28,10 @@ int read_capacity(char* arg){
                 return ERROR;
 
         general_info.capacity = capacity_desired;
+
+        //Take advantage of function to initialize time parameter
+        if(clock_gettime(CLOCK_REALTIME, &general_info.starting_time) == ERROR)
+                printf("Sauna: %s\n", strerror(errno));
 
         return OK;
 }

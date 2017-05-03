@@ -37,11 +37,11 @@ int main(int argc, char** argv){
 
         index = 0;
         while(read_request(received[index]) == OK) {
-                //int reject = rand() % 10;
-                //if(reject < 7) {
-                        printf("REQUEST RECEIVED. Serial nr.%d, expected usage time %d, gender %c\n", received[index]->serial_number, received[index]->usage_time, received[index]->gender);
-                  //      received[index] = NULL;
-                //}
+                int reject = rand() % 10;
+                if(reject < 7) {
+                        printf("Sauna: Request received: Serial nr.%d, expected usage time %d, gender %c\n", received[index]->serial_number, received[index]->usage_time, received[index]->gender);
+                        received[index] = NULL;
+                }
                 index++;
         }
 

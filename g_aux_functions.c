@@ -10,6 +10,17 @@ static generator_info general_info;
 static requests_queue queue;
 static int sequential_serial_number = 0;
 
+#define NS_TO_MS(t) (t)/1e6
+
+long get_ms_since_startup(){
+        struct timespec current_time;
+        if(clock_gettime(CLOCK_REALTIME, &current_time) == ERROR) {
+                printf("Gerador: %s\n", strerror(errno));
+                return ERROR;
+        }
+        return NS_TO_MS(current_time.tv_nsec - general_info.starting_time.tv_nsec);
+}
+
 int get_number_of_requests(){
         return general_info.number_of_requests;
 }
@@ -22,6 +33,10 @@ int read_requests_info(char** argv){
         general_info.number_of_rejected_female_requests = 0;
         general_info.number_of_discarded_male_requests = 0;
         general_info.number_of_discarded_female_requests = 0;
+
+        //Take advantage of function to initialize time parameter
+        if(clock_gettime(CLOCK_REALTIME, &general_info.starting_time) == ERROR)
+                printf("Gerador: %s\n", strerror(errno));
 
         //Actually do what the function is supposed to
         unsigned long max_requests = strtoul(argv[1], NULL, 10);
@@ -80,13 +95,13 @@ int send_request(request_info* request){
 
 int read_reject(request_info* rejected){
         int status;
-        if(status = read(general_info.requests_rejected_fd, rejected, sizeof(request_info)), status == ERROR){
+        if(status = read(general_info.requests_rejected_fd, rejected, sizeof(request_info)), status == ERROR) {
                 printf("Gerador: Fucked up while reading rejected request\n");
                 return ERROR;
-              }
-        else if(status == 0){
-          printf("Gerador: End of rejected requests FIFO\n");
-          return ERROR;
+        }
+        else if(status == 0) {
+                printf("Gerador: End of rejected requests FIFO\n");
+                return ERROR;
         }
 
         return OK;

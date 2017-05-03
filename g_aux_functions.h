@@ -1,3 +1,4 @@
+#include <time.h>
 #include "g_macros.h"
 
 typedef struct {
@@ -19,6 +20,8 @@ typedef struct {
 
         int number_of_discarded_male_requests;
         int number_of_discarded_female_requests;
+
+        struct timespec starting_time;
 }generator_info;
 
 typedef struct {
@@ -27,6 +30,8 @@ typedef struct {
         char gender;
         int number_of_rejections; //To control when to possibly discard the request
 }request_info;
+
+long get_ms_since_startup();
 
 int read_requests_info(char** argv);
 int get_number_of_requests();
@@ -39,7 +44,9 @@ int open_statistics_file();
 int send_request(request_info* request);
 int read_reject(request_info* rejected);
 
-int write_to_statistics(char* str); //TODO: Split into different functions to write made or rejected or discarded requests (each function receives a request as a parameter, string formed automatically inside)
+//TODO: Split into different functions to write made or rejected or discarded requests.
+//Each function receives a request and request state (PEDIDO, REJEITADO OU DESCARTADO) as parameters
+int write_to_statistics(char* str);
 void close_entry_fd(); //TODO: Add verification to close() return value?
 void close_rejected_fd(); //TODO: Add verification to close() return value?
 void close_statistics_fd(); //TODO: Add verification to close() return value?
