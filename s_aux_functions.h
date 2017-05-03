@@ -17,7 +17,7 @@ typedef struct {
         int number_of_rejections;
 }request_info;
 
-long get_ms_since_startup();
+double get_ms_since_startup();
 
 int read_capacity(char* argv);
 int get_capacity();

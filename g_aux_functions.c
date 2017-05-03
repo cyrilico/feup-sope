@@ -10,15 +10,15 @@ static generator_info general_info;
 static requests_queue queue;
 static int sequential_serial_number = 0;
 
-#define NS_TO_MS(t) (t)/1e6
+#define NS_TO_H_MS(t) (t)/1e4 //Nanoseconds to hundreds of miliseconds
 
-long get_ms_since_startup(){
+double get_ms_since_startup(){
         struct timespec current_time;
         if(clock_gettime(CLOCK_REALTIME, &current_time) == ERROR) {
                 printf("Gerador: %s\n", strerror(errno));
                 return ERROR;
         }
-        return NS_TO_MS(current_time.tv_nsec - general_info.starting_time.tv_nsec);
+        return NS_TO_H_MS(current_time.tv_nsec - general_info.starting_time.tv_nsec)/100.0;
 }
 
 int get_number_of_requests(){

@@ -10,15 +10,15 @@
 
 static sauna_info general_info;
 
-#define NS_TO_MS(t) (t)/1e6
+#define NS_TO_H_MS(t) (t)/1e4 //Nanoseconds to hundreds of miliseconds
 
-long get_ms_since_startup(){
+double get_ms_since_startup(){
         struct timespec current_time;
         if(clock_gettime(CLOCK_REALTIME, &current_time) == ERROR) {
                 printf("Sauna: %s\n", strerror(errno));
                 return ERROR;
         }
-        return NS_TO_MS(current_time.tv_nsec - general_info.starting_time.tv_nsec);
+        return NS_TO_H_MS(current_time.tv_nsec - general_info.starting_time.tv_nsec)/100.0;
 }
 
 int read_capacity(char* arg){

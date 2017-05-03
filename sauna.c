@@ -42,7 +42,7 @@ int main(int argc, char** argv){
                         printf("Sauna: Request received: Serial nr.%d, expected usage time %d, gender %c\n", received[index]->serial_number, received[index]->usage_time, received[index]->gender);
                         received[index] = NULL;
                 }
-                index++;
+                index++; 
         }
 
         close_entry_fd();

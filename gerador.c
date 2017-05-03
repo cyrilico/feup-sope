@@ -38,7 +38,7 @@ int main(int argc, char** argv){
                         printf("Gerador: %s\n", strerror(errno));
                 else{
                         char output[100];
-                        sprintf(output, "%ld | REQUEST MADE. SERIAL NUMBER %d, USAGE TIME %d, GENDER %c\n", get_ms_since_startup(), next_request->serial_number, next_request->usage_time, next_request->gender);
+                        sprintf(output, "%.2f | REQUEST MADE. SERIAL NUMBER %d, USAGE TIME %d, GENDER %c\n", get_ms_since_startup(), next_request->serial_number, next_request->usage_time, next_request->gender);
                         if(write_to_statistics(output) == ERROR)
                                 printf("Gerador: %s\n", strerror(errno));
                 }
@@ -52,7 +52,7 @@ int main(int argc, char** argv){
         while(read_reject(&stuff) == OK) {
                 printf("Gerador: Processing rejected request %d\n", stuff.serial_number);
                 char msg[100];
-                sprintf(msg, "%ld | REQUEST REJECTED. SERIAL NUMBER %d, USAGE TIME %d, GENDER %c\n", get_ms_since_startup(), stuff.serial_number, stuff.usage_time, stuff.gender);
+                sprintf(msg, "%.2f | REQUEST REJECTED. SERIAL NUMBER %d, USAGE TIME %d, GENDER %c\n", get_ms_since_startup(), stuff.serial_number, stuff.usage_time, stuff.gender);
                 if(write_to_statistics(msg) == ERROR)
                         printf("Gerador: %s\n", strerror(errno));
         }

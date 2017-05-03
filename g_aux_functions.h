@@ -31,7 +31,7 @@ typedef struct {
         int number_of_rejections; //To control when to possibly discard the request
 }request_info;
 
-long get_ms_since_startup();
+double get_ms_since_startup();
 
 int read_requests_info(char** argv);
 int get_number_of_requests();
