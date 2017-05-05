@@ -44,9 +44,8 @@ int open_statistics_file();
 int send_request(request_info* request);
 int read_reject(request_info* rejected);
 
-//TODO: Split into different functions to write made or rejected or discarded requests.
-//Each function receives a request and request state (PEDIDO, REJEITADO OU DESCARTADO) as parameters
-int write_to_statistics(char* str);
+int write_to_statistics(request_info* request, char* request_outcome);
+
 void close_entry_fd(); //TODO: Add verification to close() return value?
 void close_rejected_fd(); //TODO: Add verification to close() return value?
 void close_statistics_fd(); //TODO: Add verification to close() return value?

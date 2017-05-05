@@ -72,6 +72,19 @@ int open_fifos(){
         return OK;
 }
 
+int create_semaphores(){
+    mode_t permissions = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP; //Read and write for file owner and group owner
+
+    //TODO: Create sauna access semaphore
+
+    if(pthread_mutex_init(&general_info.sauna_mutex, NULL) != OK){
+      printf("Sauna: %s\n", strerror(errno));
+      return ERROR;
+    }
+
+    return OK;
+}
+
 int read_request(request_info* request){
         if(read(general_info.requests_received_fd, request, sizeof(request_info)) > 0)
                 return OK;

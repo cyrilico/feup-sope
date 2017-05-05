@@ -107,8 +107,10 @@ int read_reject(request_info* rejected){
         return OK;
 }
 
-int write_to_statistics(char* str){
-        if(write(general_info.statistics_fd, str, strlen(str)) == ERROR)
+int write_to_statistics(request_info* request, char* request_outcome){
+        char output[100];
+        sprintf(output, "%.2f - %d - %d: %c - %d - %s\n", get_ms_since_startup(), getpid(), request->serial_number, request->gender, request->usage_time, request_outcome);
+        if(write(general_info.statistics_fd, output, strlen(output)) == ERROR)
                 return ERROR;
         return OK;
 }
