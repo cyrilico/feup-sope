@@ -46,11 +46,12 @@ int main(int argc, char** argv){
         assert(get_queue_size() == 0);
 
         close_entry_fd();
-        request_info stuff;
+        /*request_info stuff;
         while(read_reject(&stuff) == OK) {
                 if(write_to_statistics(&stuff, "REJEITADO") == ERROR)
                         printf("Gerador: %s\n", strerror(errno));
         }
+        */
 
         close_statistics_fd();
         close_rejected_fd();

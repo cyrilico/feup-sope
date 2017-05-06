@@ -1,4 +1,5 @@
 #include <time.h>
+#include <pthread.h>
 #include "g_macros.h"
 
 typedef struct {
@@ -22,6 +23,8 @@ typedef struct {
         int number_of_discarded_female_requests;
 
         struct timespec starting_time;
+
+        pthread_mutex_t gerador_mutex;
 }generator_info;
 
 typedef struct {
@@ -41,10 +44,13 @@ void generate_request();
 int open_fifos();
 int open_statistics_file();
 
+int create_mutex();
+pthread_mutex_t* get_mutex();
+
 int send_request(request_info* request);
 int read_reject(request_info* rejected);
 
-int write_to_statistics(request_info* request, char* request_outcome);
+int write_to_statistics(request_info* request, const char* request_outcome);
 
 void close_entry_fd(); //TODO: Add verification to close() return value?
 void close_rejected_fd(); //TODO: Add verification to close() return value?

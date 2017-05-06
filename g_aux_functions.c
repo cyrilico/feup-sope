@@ -79,6 +79,19 @@ int open_fifos(){
         return OK;
 }
 
+int create_mutex(){
+        if(pthread_mutex_init(&general_info.gerador_mutex, NULL) != OK) {
+                printf("Gerador: %s\n", strerror(errno));
+                return ERROR;
+        }
+
+        return OK;
+}
+
+pthread_mutex_t* get_mutex(){
+        return &general_info.gerador_mutex;
+}
+
 int open_statistics_file(){
         char file[50];
         sprintf(file, "/tmp/ger.%d", getpid());
@@ -107,7 +120,7 @@ int read_reject(request_info* rejected){
         return OK;
 }
 
-int write_to_statistics(request_info* request, char* request_outcome){
+int write_to_statistics(request_info* request, const char* request_outcome){
         char output[100];
         sprintf(output, "%.2f - %d - %d: %c - %d - %s\n", get_ms_since_startup(), getpid(), request->serial_number, request->gender, request->usage_time, request_outcome);
         if(write(general_info.statistics_fd, output, strlen(output)) == ERROR)

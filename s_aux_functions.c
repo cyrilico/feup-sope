@@ -29,9 +29,11 @@ int read_capacity(char* arg){
 
         general_info.capacity = capacity_desired;
 
-        //Take advantage of function to initialize time parameter
+        //Take advantage of function to initialize time parameter and pthread ids array
         if(clock_gettime(CLOCK_REALTIME, &general_info.starting_time) == ERROR)
                 printf("Sauna: %s\n", strerror(errno));
+
+        general_info.thread_id_index = 0;
 
         return OK;
 }
@@ -72,18 +74,61 @@ int open_fifos(){
         return OK;
 }
 
-int create_semaphores(){
-    mode_t permissions = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP; //Read and write for file owner and group owner
-
-    //TODO: Create sauna access semaphore
-
-    if(pthread_mutex_init(&general_info.sauna_mutex, NULL) != OK){
-      printf("Sauna: %s\n", strerror(errno));
-      return ERROR;
-    }
-
-    return OK;
+int open_statistics_file(){
+        char file[50];
+        sprintf(file, "/tmp/bal.%d", getpid());
+        if((general_info.statistics_fd = open(file, O_WRONLY | O_CREAT | O_EXCL | O_SYNC)) == ERROR)
+                return ERROR;
+        return OK;
 }
+
+int write_to_statistics(request_info* request, const char* request_outcome){
+        char output[100];
+        sprintf(output, "%.2f - %d - %ld - %d: %c - %d - %s\n", get_ms_since_startup(), getpid(), pthread_self(), request->serial_number, request->gender, request->usage_time, request_outcome);
+        if(write(general_info.statistics_fd, output, strlen(output)) == ERROR)
+                return ERROR;
+        return OK;
+}
+
+int create_semaphores(){
+        if(sem_init(&general_info.sauna_semaphore, 0, general_info.capacity) != OK) {
+                printf("Sauna: %s\n", strerror(errno));
+                return ERROR;
+        }
+
+        if(pthread_mutex_init(&general_info.sauna_mutex, NULL) != OK) {
+                printf("Sauna: %s\n", strerror(errno));
+                return ERROR;
+        }
+
+        return OK;
+}
+
+sem_t* get_semaphore(){
+        return &general_info.sauna_semaphore;
+}
+
+pthread_mutex_t* get_mutex(){
+        return &general_info.sauna_mutex;
+}
+
+char get_current_valid_gender(){
+        return general_info.current_gender_in_sauna;
+}
+
+void set_current_valid_gender(char gender){
+        general_info.current_gender_in_sauna = gender;
+}
+
+pthread_t* get_free_thread_id_pointer(){
+        if(general_info.thread_id_index == 100) //TODO: Use macro here (same one as in header file for array)
+                return NULL;
+
+        pthread_t* result = &general_info.thread_ids[general_info.thread_id_index];
+        general_info.thread_id_index++;
+        return result;
+}
+
 
 int read_request(request_info* request){
         if(read(general_info.requests_received_fd, request, sizeof(request_info)) > 0)
@@ -97,9 +142,19 @@ int send_rejected(request_info* rejected){
         return OK;
 }
 
+void wait_for_threads(){
+  int i;
+  for(i = 0; i < general_info.thread_id_index; i++)
+    pthread_join(general_info.thread_ids[i], NULL);
+}
+
 void close_entry_fd(){
         printf("Sauna: Closing entry fd\n");
         close(general_info.requests_received_fd);
+}
+
+void close_statistics_fd(){
+      close(general_info.statistics_fd);
 }
 
 void close_rejected_fd(){
