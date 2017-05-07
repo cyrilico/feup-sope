@@ -8,17 +8,22 @@
 #include "s_macros.h"
 #include "s_aux_functions.h"
 
+#define S_TO_MS 1e3
+#define NS_TO_MS 1e-6
+
 static sauna_info general_info;
 
-#define NS_TO_H_MS(t) (t)/1e4 //Nanoseconds to hundreds of miliseconds
-
 double get_ms_since_startup(){
-        struct timespec current_time;
-        if(clock_gettime(CLOCK_REALTIME, &current_time) == ERROR) {
+        struct timespec current_time_temp;
+        if(clock_gettime(CLOCK_REALTIME, &current_time_temp) == ERROR) {
                 printf("Sauna: %s\n", strerror(errno));
                 return ERROR;
         }
-        return NS_TO_H_MS(current_time.tv_nsec - general_info.starting_time.tv_nsec)/100.0;
+
+        double current_time = (double)(current_time_temp.tv_sec*S_TO_MS + current_time_temp.tv_nsec*NS_TO_MS);
+        //printf("Sauna: get_ms_since_startup: since epoch %f | difference %f\n", current_time, current_time - general_info.starting_time);
+
+        return current_time - general_info.starting_time;
 }
 
 int read_capacity(char* arg){
@@ -30,8 +35,11 @@ int read_capacity(char* arg){
         general_info.capacity = capacity_desired;
 
         //Take advantage of function to initialize time parameter and pthread ids array
-        if(clock_gettime(CLOCK_REALTIME, &general_info.starting_time) == ERROR)
+        struct timespec starting_time_temp;
+        if(clock_gettime(CLOCK_REALTIME, &starting_time_temp) == ERROR)
                 printf("Sauna: %s\n", strerror(errno));
+        general_info.starting_time = (double)(starting_time_temp.tv_sec*S_TO_MS + starting_time_temp.tv_nsec*NS_TO_MS);
+        printf("Sauna: ms since epoch %f\n", general_info.starting_time);
 
         general_info.thread_id_index = 0;
 
@@ -90,28 +98,6 @@ int write_to_statistics(request_info* request, const char* request_outcome){
         return OK;
 }
 
-int create_semaphores(){
-        if(sem_init(&general_info.sauna_semaphore, 0, general_info.capacity) != OK) {
-                printf("Sauna: %s\n", strerror(errno));
-                return ERROR;
-        }
-
-        if(pthread_mutex_init(&general_info.sauna_mutex, NULL) != OK) {
-                printf("Sauna: %s\n", strerror(errno));
-                return ERROR;
-        }
-
-        return OK;
-}
-
-sem_t* get_semaphore(){
-        return &general_info.sauna_semaphore;
-}
-
-pthread_mutex_t* get_mutex(){
-        return &general_info.sauna_mutex;
-}
-
 char get_current_valid_gender(){
         return general_info.current_gender_in_sauna;
 }
@@ -143,9 +129,9 @@ int send_rejected(request_info* rejected){
 }
 
 void wait_for_threads(){
-  int i;
-  for(i = 0; i < general_info.thread_id_index; i++)
-    pthread_join(general_info.thread_ids[i], NULL);
+        int i;
+        for(i = 0; i < general_info.thread_id_index; i++)
+                pthread_join(general_info.thread_ids[i], NULL);
 }
 
 void close_entry_fd(){
@@ -154,7 +140,7 @@ void close_entry_fd(){
 }
 
 void close_statistics_fd(){
-      close(general_info.statistics_fd);
+        close(general_info.statistics_fd);
 }
 
 void close_rejected_fd(){

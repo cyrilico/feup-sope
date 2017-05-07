@@ -5,7 +5,8 @@
 typedef struct {
         //Read at startup
         int max_usage_time;
-        int number_of_requests;
+        int number_of_requests_to_generate;
+        int number_of_requests_left;
 
         //File descriptors for fifo and statistics file
         int requests_sent_fd;
@@ -37,7 +38,9 @@ typedef struct {
 double get_ms_since_startup();
 
 int read_requests_info(char** argv);
-int get_number_of_requests();
+int get_number_of_requests_left();
+void inc_number_of_requests_left();
+void dec_number_of_requests_left();
 
 void generate_request();
 

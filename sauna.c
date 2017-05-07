@@ -9,21 +9,22 @@
 
 #define MS_TO_MICROS 1000
 
-//TODO: HOW TO FIX THIS ISSUE?
-//ISSUE: SEMAPHORE CAN'T BE IN STATIC STRUCT IN S_AUX_FUNCTIONS.C (THREADS SOMEHOW CAN'T SEE IT SO SEM_WAIT RESULTS IN INFINITE WAIT)
-sem_t cenas;
+sem_t sauna_semaphore;
+pthread_mutex_t file_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void* accept_request(void* request){
-        sem_wait(&cenas); //Will wait for opening if sauna is full
+        sem_wait(&sauna_semaphore); //Will wait for opening if sauna is full
+        int value;
+        sem_getvalue(&sauna_semaphore, &value);
+        printf("Request #%d entered sauna, currently %d free spots\n", ((request_info*)request)->serial_number, value);
         usleep(((request_info*)request)->usage_time * MS_TO_MICROS);
-        sem_post(&cenas);
+        sem_post(&sauna_semaphore); //Notify there is another free place
+        sem_getvalue(&sauna_semaphore, &value);
+        printf("Request #%d exited sauna, currently %d free spots\n", ((request_info*)request)->serial_number, value);
 
-        printf("Thread%ld: Request done, waiting to write to file\n", pthread_self());
-        pthread_mutex_lock(get_mutex());
-        printf("Thread%ld: Writing to file\n", pthread_self());
         if(write_to_statistics(((request_info*)request), "SERVIDO") == ERROR)
                 printf("Sauna(thread%ld): %s\n", pthread_self(), strerror(errno));
-        pthread_mutex_unlock(get_mutex());
+
         return NULL;
 }
 
@@ -38,7 +39,10 @@ int main(int argc, char** argv){
                 exit(ERROR);
         }
 
-        sem_init(&cenas, 0, get_capacity());
+        if(sem_init(&sauna_semaphore, 0, get_capacity()) != OK) {
+                printf("Sauna: %s\n", strerror(errno));
+                exit(ERROR);
+        }
 
         if(create_fifos() == ERROR)
                 exit(ERROR);
@@ -57,25 +61,26 @@ int main(int argc, char** argv){
                 exit(ERROR);
         }
 
-        //TEMPORARY
-        request_info stuff;
-        while(read_request(&stuff) == OK) {
+        request_info* current_request = (request_info*)(malloc(sizeof(request_info)));
+        while(read_request(current_request) == OK) {
                 //Register that sauna got the request
-                pthread_mutex_lock(get_mutex());
-                if(write_to_statistics(&stuff, "RECEBIDO") == ERROR)
+                if(write_to_statistics(current_request, "RECEBIDO") == ERROR)
                         printf("Sauna: %s\n", strerror(errno));
-                pthread_mutex_unlock(get_mutex());
-                int reject = rand() % 10;
-                //Register that sauna rejected the request
-                if(reject < 5) {
-                        pthread_mutex_lock(get_mutex());
-                        if(write_to_statistics(&stuff, "REJEITADO") == ERROR)
+
+                int semaphore_value;
+                sem_getvalue(&sauna_semaphore, &semaphore_value);
+                int empty_sauna = (semaphore_value == get_capacity() ? 1 : 0);
+
+                if(!empty_sauna && get_current_valid_gender() != current_request->gender) {
+                        if(write_to_statistics(current_request, "REJEITADO") == ERROR)
                                 printf("Sauna: %s\n", strerror(errno));
-                        pthread_mutex_unlock(get_mutex());
                 }
-                //Accept the request, wait for its session to finish and register service
-                else
-                  pthread_create(get_free_thread_id_pointer(), NULL, accept_request, (void*)&stuff);
+                else{
+                  if(empty_sauna)
+                    set_current_valid_gender(current_request->gender);
+                  pthread_create(get_free_thread_id_pointer(), NULL, accept_request, (void*)current_request);
+                }
+                current_request = (request_info*)(malloc(sizeof(request_info)));
         }
 
         wait_for_threads();

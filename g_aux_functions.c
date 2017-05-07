@@ -21,8 +21,16 @@ double get_ms_since_startup(){
         return NS_TO_H_MS(current_time.tv_nsec - general_info.starting_time.tv_nsec)/100.0;
 }
 
-int get_number_of_requests(){
-        return general_info.number_of_requests;
+int get_number_of_requests_left(){
+        return general_info.number_of_requests_left;
+}
+
+void inc_number_of_requests_left(){
+  general_info.number_of_requests_left++;
+}
+
+void dec_number_of_requests_left(){
+  general_info.number_of_requests_left--;
 }
 
 int read_requests_info(char** argv){
@@ -45,18 +53,22 @@ int read_requests_info(char** argv){
         if(max_requests == 0 || max_usage == 0)
                 return ERROR;
 
-        general_info.number_of_requests = (int)max_requests;
+        general_info.number_of_requests_to_generate = (int)max_requests;
+        general_info.number_of_requests_left = general_info.number_of_requests_to_generate;
         general_info.max_usage_time = (int)max_usage;
 
         //Also take advantage to initialize queue
         queue.first_index_free = 0;
         //Queue will never have more than the specified number of requests (can/will have less)
-        queue.requests_queue = (request_info**)(malloc(general_info.number_of_requests*sizeof(request_info*)));
+        queue.requests_queue = (request_info**)(malloc(general_info.number_of_requests_to_generate*sizeof(request_info*)));
 
         return OK;
 }
 
 void generate_request(){
+        if(general_info.number_of_requests_to_generate == 0)
+          return;
+        
         request_info* result = (request_info*)(malloc(sizeof(request_info)));
 
         result->serial_number = sequential_serial_number++;
