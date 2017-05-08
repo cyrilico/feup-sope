@@ -9,6 +9,8 @@
 
 #define S_TO_MS 1e3
 #define NS_TO_MS 1e-6
+#define MAXLINE 50
+#define SORT "/usr/bin/sort"
 
 static sauna_info general_info;
 
@@ -191,6 +193,37 @@ void inc_number_of_served_requests(request_info* request){
                 general_info.number_of_served_male_requests++;
         else
                 general_info.number_of_served_female_requests++;
+}
+
+int sort_statistics_file() {
+        char line[MAXLINE];
+        FILE *fpin, *fsort;
+        int FOUT_FILENO;
+
+        char file[50];
+        sprintf(file, "/tmp/bal.%d", getpid());
+        if((fpin = fopen(file, "r")) == ERROR)
+                return ERROR;
+
+        sprintf(file, "/tmp/bal_sort.%d", getpid());
+        if((FOUT_FILENO = open(file, O_WRONLY | O_CREAT | O_EXCL | O_SYNC, 0777)) == ERROR)
+                return ERROR;
+
+        // Opening sort "file" as pipe to write to
+        if ((fsort = popen(SORT, "w")) == NULL) {
+                fprintf(stderr, "popen error");
+                return ERROR;
+        }
+
+        if(fork() == 0) {
+                dup2(STDOUT_FILENO, FOUT_FILENO);
+                while (fgets(line, MAXLINE, fpin) != NULL) // Reading line from input file
+                        fputs(line, fsort); // Writing line to sort
+        }
+
+        pclose(fpin);
+        pclose(fsort);
+        close(FOUT_FILENO);
 }
 
 void print_final_statistics(){

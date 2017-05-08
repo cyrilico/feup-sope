@@ -27,7 +27,7 @@ void* send_requests(void* nothing){
                 pthread_mutex_unlock(&queue_mutex);
                 if(next_request == NULL)
                         continue;
-                //printf("Gerador: Sending request %d\n", next_request->serial_number);
+                printf("Gerador: Sending request %d\n", next_request->serial_number);
                 if(send_request(next_request) == ERROR) {
                         printf("Gerador3: %s\n", strerror(errno));
                         exit(ERROR);
