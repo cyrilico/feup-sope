@@ -5,8 +5,7 @@
 typedef struct {
         //Read at startup
         int max_usage_time;
-        int number_of_requests_to_generate;
-        int number_of_requests_left;
+        int number_of_requests;
 
         //File descriptors for fifo and statistics file
         int requests_sent_fd;
@@ -23,9 +22,7 @@ typedef struct {
         int number_of_discarded_male_requests;
         int number_of_discarded_female_requests;
 
-        struct timespec starting_time;
-
-        pthread_mutex_t gerador_mutex;
+        double starting_time;
 }generator_info;
 
 typedef struct {
@@ -38,17 +35,16 @@ typedef struct {
 double get_ms_since_startup();
 
 int read_requests_info(char** argv);
-int get_number_of_requests_left();
-void inc_number_of_requests_left();
-void dec_number_of_requests_left();
+int get_number_of_requests();
 
 void generate_request();
 
 int open_fifos();
 int open_statistics_file();
 
-int create_mutex();
-pthread_mutex_t* get_mutex();
+int send_number_of_requests();
+
+int get_entry_fd();
 
 int send_request(request_info* request);
 int read_reject(request_info* rejected);

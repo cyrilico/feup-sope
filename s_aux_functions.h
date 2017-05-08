@@ -26,11 +26,17 @@ typedef struct {
 
 double get_ms_since_startup();
 
+int get_number_of_requests();
+void inc_number_of_requests();
+void dec_number_of_requests();
+
 int read_capacity(char* argv);
 int get_capacity();
 
 int create_fifos();
 int open_fifos();
+
+int receive_number_of_requests();
 
 int open_statistics_file();
 int write_to_statistics(request_info* request, const char* request_outcome);

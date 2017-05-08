@@ -26,6 +26,18 @@ double get_ms_since_startup(){
         return current_time - general_info.starting_time;
 }
 
+int get_number_of_requests(){
+  return general_info.number_of_requests;
+}
+
+void inc_number_of_requests(){
+  general_info.number_of_requests++;
+}
+
+void dec_number_of_requests(){
+  general_info.number_of_requests--;
+}
+
 int read_capacity(char* arg){
         unsigned long capacity_desired = strtoul(arg, NULL, 10);
 
@@ -39,7 +51,7 @@ int read_capacity(char* arg){
         if(clock_gettime(CLOCK_REALTIME, &starting_time_temp) == ERROR)
                 printf("Sauna: %s\n", strerror(errno));
         general_info.starting_time = (double)(starting_time_temp.tv_sec*S_TO_MS + starting_time_temp.tv_nsec*NS_TO_MS);
-        printf("Sauna: ms since epoch %f\n", general_info.starting_time);
+        //printf("Sauna: ms since epoch %f\n", general_info.starting_time);
 
         general_info.thread_id_index = 0;
 
@@ -51,7 +63,8 @@ int get_capacity(){
 }
 
 int create_fifos(){
-        mode_t permissions = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP; //Read and write for file owner and group owner
+        //mode_t permissions = S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP; //Read and write for file owner and group owner
+        mode_t permissions = 0777;
 
         if(mkfifo("/tmp/entrada", permissions) != OK) {
                 if(errno != EEXIST) { //EEXIST would mean that couldn't make FIFO but only because it already exists
@@ -82,10 +95,16 @@ int open_fifos(){
         return OK;
 }
 
+int receive_number_of_requests(){
+  if(read(general_info.requests_received_fd, &general_info.number_of_requests, sizeof(int)) > 0)
+          return OK;
+  return ERROR;
+}
+
 int open_statistics_file(){
         char file[50];
         sprintf(file, "/tmp/bal.%d", getpid());
-        if((general_info.statistics_fd = open(file, O_WRONLY | O_CREAT | O_EXCL | O_SYNC)) == ERROR)
+        if((general_info.statistics_fd = open(file, O_WRONLY | O_CREAT | O_EXCL | O_SYNC, 0777)) == ERROR)
                 return ERROR;
         return OK;
 }

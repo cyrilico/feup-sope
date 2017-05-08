@@ -6,31 +6,28 @@
 #include <unistd.h>
 #include "g_aux_functions.h"
 
+#define S_TO_MS 1000
+#define NS_TO_MS 1e-6
+
 static generator_info general_info;
 static requests_queue queue;
 static int sequential_serial_number = 0;
 
-#define NS_TO_H_MS(t) (t)/1e4 //Nanoseconds to hundreds of miliseconds
-
 double get_ms_since_startup(){
-        struct timespec current_time;
-        if(clock_gettime(CLOCK_REALTIME, &current_time) == ERROR) {
+        struct timespec current_time_temp;
+        if(clock_gettime(CLOCK_REALTIME, &current_time_temp) == ERROR) {
                 printf("Gerador: %s\n", strerror(errno));
                 return ERROR;
         }
-        return NS_TO_H_MS(current_time.tv_nsec - general_info.starting_time.tv_nsec)/100.0;
+
+        double current_time = (double)(current_time_temp.tv_sec*S_TO_MS + current_time_temp.tv_nsec*NS_TO_MS);
+        //printf("Gerador: get_ms_since_startup: since epoch %f | difference %f\n", current_time, current_time - general_info.starting_time);
+
+        return current_time - general_info.starting_time;
 }
 
-int get_number_of_requests_left(){
-        return general_info.number_of_requests_left;
-}
-
-void inc_number_of_requests_left(){
-  general_info.number_of_requests_left++;
-}
-
-void dec_number_of_requests_left(){
-  general_info.number_of_requests_left--;
+int get_number_of_requests(){
+        return general_info.number_of_requests;
 }
 
 int read_requests_info(char** argv){
@@ -43,8 +40,10 @@ int read_requests_info(char** argv){
         general_info.number_of_discarded_female_requests = 0;
 
         //Take advantage of function to initialize time parameter
-        if(clock_gettime(CLOCK_REALTIME, &general_info.starting_time) == ERROR)
+        struct timespec starting_time_temp;
+        if(clock_gettime(CLOCK_REALTIME, &starting_time_temp) == ERROR)
                 printf("Gerador: %s\n", strerror(errno));
+        general_info.starting_time = (double)(starting_time_temp.tv_sec*S_TO_MS + starting_time_temp.tv_nsec*NS_TO_MS);
 
         //Actually do what the function is supposed to
         unsigned long max_requests = strtoul(argv[1], NULL, 10);
@@ -53,28 +52,29 @@ int read_requests_info(char** argv){
         if(max_requests == 0 || max_usage == 0)
                 return ERROR;
 
-        general_info.number_of_requests_to_generate = (int)max_requests;
-        general_info.number_of_requests_left = general_info.number_of_requests_to_generate;
+        general_info.number_of_requests = (int)max_requests;
         general_info.max_usage_time = (int)max_usage;
 
         //Also take advantage to initialize queue
         queue.first_index_free = 0;
         //Queue will never have more than the specified number of requests (can/will have less)
-        queue.requests_queue = (request_info**)(malloc(general_info.number_of_requests_to_generate*sizeof(request_info*)));
+        queue.requests_queue = (request_info**)(malloc(general_info.number_of_requests*sizeof(request_info*)));
 
         return OK;
 }
 
 void generate_request(){
-        if(general_info.number_of_requests_to_generate == 0)
-          return;
-        
+        if(general_info.number_of_requests == 0)
+                return;
+
         request_info* result = (request_info*)(malloc(sizeof(request_info)));
 
         result->serial_number = sequential_serial_number++;
         result->usage_time = rand() % general_info.max_usage_time + 1;
         result->gender = (rand() % 2 == 0 ? 'F' : 'M');
         result->number_of_rejections = 0;
+
+        general_info.number_of_requests--;
 
         push_request(result);
 }
@@ -91,25 +91,22 @@ int open_fifos(){
         return OK;
 }
 
-int create_mutex(){
-        if(pthread_mutex_init(&general_info.gerador_mutex, NULL) != OK) {
-                printf("Gerador: %s\n", strerror(errno));
-                return ERROR;
-        }
-
-        return OK;
-}
-
-pthread_mutex_t* get_mutex(){
-        return &general_info.gerador_mutex;
-}
-
 int open_statistics_file(){
         char file[50];
         sprintf(file, "/tmp/ger.%d", getpid());
-        if((general_info.statistics_fd = open(file, O_WRONLY | O_CREAT | O_EXCL | O_SYNC)) == ERROR)
+        if((general_info.statistics_fd = open(file, O_WRONLY | O_CREAT | O_EXCL | O_SYNC, 0777)) == ERROR)
                 return ERROR;
         return OK;
+}
+
+int send_number_of_requests(){
+        if(write(general_info.requests_sent_fd, &general_info.number_of_requests, sizeof(int)) == ERROR)
+                return ERROR;
+        return OK;
+}
+
+int get_entry_fd(){
+        return general_info.requests_sent_fd;
 }
 
 int send_request(request_info* request){
@@ -155,6 +152,9 @@ void close_statistics_fd(){
 }
 
 request_info* get_next_request(){
+        if(queue.first_index_free == 0)
+                return NULL;
+
         request_info* result = queue.requests_queue[0];
         int i;
         for(i = 0; i < queue.first_index_free-1; i++)

@@ -11,13 +11,24 @@
 pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void* send_requests(void* nothing){
-        while(get_number_of_requests_left() > 0) {
+        while(1) {
+                //If duplication fails, other thread has terminated which means sauna is ready to finish
+                int temp_fd;
+                if((temp_fd = dup(get_entry_fd())) == ERROR){
+                        printf("Gerador: Entry FD closed, exiting thread\n");
+                        break;
+                }
+                else
+                        close(temp_fd);
+
                 pthread_mutex_lock(&queue_mutex);
                 generate_request(); //Will do nothing if all requests have been generated (only processing rejected left)
                 request_info* next_request = get_next_request();
                 pthread_mutex_unlock(&queue_mutex);
-                dec_number_of_requests_left();
-                if(send_request(next_request) == ERROR){
+                if(next_request == NULL)
+                        continue;
+                //printf("Gerador: Sending request %d\n", next_request->serial_number);
+                if(send_request(next_request) == ERROR) {
                         printf("Gerador3: %s\n", strerror(errno));
                         exit(ERROR);
                 }
@@ -27,20 +38,30 @@ void* send_requests(void* nothing){
                 }
         }
 
+        close_rejected_fd();
         return NULL;
 }
 
 void* process_rejected_requests(void* nothing){
         request_info* current_rejected = (request_info*)(malloc(sizeof(request_info)));
         while(read_reject(current_rejected) == OK) {
-                pthread_mutex_lock(&queue_mutex);
-                push_request(current_rejected);
-                pthread_mutex_unlock(&queue_mutex);
-                if(write_to_statistics(current_rejected, "REJEITADO") == ERROR)
-                        printf("Gerador2: %s\n", strerror(errno));
+                printf("Gerador: Received back request %d\n", current_rejected->serial_number);
+                if(current_rejected->number_of_rejections < 3) {
+                        pthread_mutex_lock(&queue_mutex);
+                        push_request(current_rejected);
+                        pthread_mutex_unlock(&queue_mutex);
+                        if(write_to_statistics(current_rejected, "REJEITADO") == ERROR)
+                                printf("Gerador2: %s\n", strerror(errno));
+                }
+                else{
+                        if(write_to_statistics(current_rejected, "DESCARTADO") == ERROR)
+                                printf("Gerador2: %s\n", strerror(errno));
+                }
 
                 current_rejected = (request_info*)(malloc(sizeof(request_info)));
         }
+
+        close_entry_fd();
         return NULL;
 }
 
@@ -65,20 +86,23 @@ int main(int argc, char** argv){
                 exit(ERROR);
         }
 
+        if(send_number_of_requests() == ERROR) {
+                printf("Gerador5: %s\n", strerror(errno));
+                exit(ERROR);
+        }
+
         pthread_t generator_thread, rejected_thread;
-        //pthread_create(&rejected_thread, NULL, process_rejected_requests, NULL);
-        //close_rejected_fd();
         pthread_create(&generator_thread, NULL, send_requests, NULL);
+        pthread_create(&rejected_thread, NULL, process_rejected_requests, NULL);
 
+        pthread_join(rejected_thread, NULL);
         pthread_join(generator_thread, NULL);
-        //pthread_join(rejected_thread, NULL);
 
-        close_entry_fd();
         close_statistics_fd();
 
         printf("Gerador: Final queue size: %d\n", get_queue_size());
-        close_rejected_fd();
-        close_entry_fd();
+
+        //TODO: Print final statistics
         close_statistics_fd();
         exit(OK);
 }
