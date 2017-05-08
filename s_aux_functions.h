@@ -2,15 +2,25 @@
 #include <semaphore.h>
 #include <pthread.h>
 
+#define OK 0
+#define ERROR -1
+
 typedef struct {
         int capacity;
-        int number_of_requests; //TODO: Initialize
+        int number_of_requests;
 
         int requests_received_fd;
         int requests_rejected_fd;
         int statistics_fd;
 
         double starting_time;
+
+        int number_of_received_male_requests;
+        int number_of_received_female_requests;
+        int number_of_rejected_male_requests;
+        int number_of_rejected_female_requests;
+        int number_of_served_male_requests;
+        int number_of_served_female_requests;
 
         char current_gender_in_sauna;
         pthread_t thread_ids[100]; //TODO: Use a macro here (max nr. of threads allowed per process?)
@@ -54,3 +64,9 @@ void wait_for_threads();
 void close_entry_fd(); //TODO: Add verification to return value from close()?
 void close_statistics_fd(); //TODO: Add verification to return value from close()?
 void close_rejected_fd(); //TODO: Add verification to return value from close()?
+
+void inc_number_of_received_requests(request_info* request);
+void inc_number_of_rejected_requests(request_info* request);
+void inc_number_of_served_requests(request_info* request);
+
+void print_final_statistics();

@@ -14,7 +14,7 @@ void* send_requests(void* nothing){
         while(1) {
                 //If duplication fails, other thread has terminated which means sauna is ready to finish
                 int temp_fd;
-                if((temp_fd = dup(get_entry_fd())) == ERROR){
+                if((temp_fd = dup(get_entry_fd())) == ERROR) {
                         printf("Gerador: Entry FD closed, exiting thread\n");
                         break;
                 }
@@ -45,7 +45,8 @@ void* send_requests(void* nothing){
 void* process_rejected_requests(void* nothing){
         request_info* current_rejected = (request_info*)(malloc(sizeof(request_info)));
         while(read_reject(current_rejected) == OK) {
-                printf("Gerador: Received back request %d\n", current_rejected->serial_number);
+                inc_number_of_rejected_requests(current_rejected); //TODO: CHECK: Being here we're counting a discarded rejection for the rejection count aswell. If we decide to not count it, just put this call inside below's 'if' brackets
+                //printf("Gerador: Received back request %d\n", current_rejected->serial_number);
                 if(current_rejected->number_of_rejections < 3) {
                         pthread_mutex_lock(&queue_mutex);
                         push_request(current_rejected);
@@ -54,6 +55,7 @@ void* process_rejected_requests(void* nothing){
                                 printf("Gerador2: %s\n", strerror(errno));
                 }
                 else{
+                        inc_number_of_discarded_requests(current_rejected);
                         if(write_to_statistics(current_rejected, "DESCARTADO") == ERROR)
                                 printf("Gerador2: %s\n", strerror(errno));
                 }

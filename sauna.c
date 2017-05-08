@@ -5,7 +5,6 @@
 #include <unistd.h>
 #include <time.h>
 #include "s_aux_functions.h"
-#include "s_macros.h"
 
 #define MS_TO_MICROS 1000
 
@@ -21,6 +20,8 @@ void* accept_request(void* request){
         sem_post(&sauna_semaphore); //Notify there is another free place
         sem_getvalue(&sauna_semaphore, &value);
         printf("Sauna: Request #%d exited sauna, currently %d free spots\n", ((request_info*)request)->serial_number, value);
+
+        inc_number_of_served_requests(((request_info*)request));
 
         if(write_to_statistics(((request_info*)request), "SERVIDO") == ERROR)
                 printf("Sauna(thread%ld): %s\n", pthread_self(), strerror(errno));
@@ -71,10 +72,11 @@ int main(int argc, char** argv){
         request_info* current_request = (request_info*)(malloc(sizeof(request_info)));
         while(get_number_of_requests() > 0) {
                 if(read_request(current_request) == ERROR)
-                  printf("Sauna: %s\n", strerror(errno));
+                        printf("Sauna: %s\n", strerror(errno));
+                inc_number_of_received_requests(current_request);
                 //printf("Sauna: Received request %d\n", ((request_info*)current_request)->serial_number);
                 dec_number_of_requests();
-                //Register that sauna got the request
+
                 if(write_to_statistics(current_request, "RECEBIDO") == ERROR)
                         printf("Sauna: %s\n", strerror(errno));
 
@@ -85,6 +87,7 @@ int main(int argc, char** argv){
                 if(!empty_sauna && get_current_valid_gender() != current_request->gender) {
                         if(write_to_statistics(current_request, "REJEITADO") == ERROR)
                                 printf("Sauna: %s\n", strerror(errno));
+                        inc_number_of_rejected_requests(current_request);
                         current_request->number_of_rejections++;
                         if(send_rejected(current_request) == ERROR)
                                 printf("Sauna: %s\n", strerror(errno));

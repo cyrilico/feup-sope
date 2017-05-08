@@ -5,7 +5,6 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "s_macros.h"
 #include "s_aux_functions.h"
 
 #define S_TO_MS 1e3
@@ -27,15 +26,15 @@ double get_ms_since_startup(){
 }
 
 int get_number_of_requests(){
-  return general_info.number_of_requests;
+        return general_info.number_of_requests;
 }
 
 void inc_number_of_requests(){
-  general_info.number_of_requests++;
+        general_info.number_of_requests++;
 }
 
 void dec_number_of_requests(){
-  general_info.number_of_requests--;
+        general_info.number_of_requests--;
 }
 
 int read_capacity(char* arg){
@@ -52,6 +51,14 @@ int read_capacity(char* arg){
                 printf("Sauna: %s\n", strerror(errno));
         general_info.starting_time = (double)(starting_time_temp.tv_sec*S_TO_MS + starting_time_temp.tv_nsec*NS_TO_MS);
         //printf("Sauna: ms since epoch %f\n", general_info.starting_time);
+
+        //And also to initialize other things
+        general_info.number_of_received_male_requests = 0;
+        general_info.number_of_received_female_requests = 0;
+        general_info.number_of_rejected_male_requests = 0;
+        general_info.number_of_rejected_female_requests = 0;
+        general_info.number_of_served_male_requests = 0;
+        general_info.number_of_served_female_requests = 0;
 
         general_info.thread_id_index = 0;
 
@@ -96,9 +103,9 @@ int open_fifos(){
 }
 
 int receive_number_of_requests(){
-  if(read(general_info.requests_received_fd, &general_info.number_of_requests, sizeof(int)) > 0)
-          return OK;
-  return ERROR;
+        if(read(general_info.requests_received_fd, &general_info.number_of_requests, sizeof(int)) > 0)
+                return OK;
+        return ERROR;
 }
 
 int open_statistics_file(){
@@ -165,4 +172,29 @@ void close_statistics_fd(){
 void close_rejected_fd(){
         printf("Sauna: Closing rejected fd\n");
         close(general_info.requests_rejected_fd);
+}
+
+void inc_number_of_received_requests(request_info* request){
+        if(request->gender == 'M')
+                general_info.number_of_received_male_requests++;
+        else
+                general_info.number_of_received_female_requests++;
+}
+void inc_number_of_rejected_requests(request_info* request){
+        if(request->gender == 'M')
+                general_info.number_of_rejected_male_requests++;
+        else
+                general_info.number_of_rejected_female_requests++;
+}
+void inc_number_of_served_requests(request_info* request){
+        if(request->gender == 'M')
+                general_info.number_of_served_male_requests++;
+        else
+                general_info.number_of_served_female_requests++;
+}
+
+void print_final_statistics(){
+        printf("Sauna: %d requests were received, %d male and %d female\n", general_info.number_of_received_male_requests+general_info.number_of_received_female_requests, general_info.number_of_received_male_requests, general_info.number_of_received_female_requests);
+        printf("Sauna: %d requests were rejected, %d male and %d female\n", general_info.number_of_rejected_male_requests+general_info.number_of_rejected_female_requests, general_info.number_of_rejected_male_requests, general_info.number_of_rejected_female_requests);
+        printf("Sauna: %d requests were served, %d male and %d female\n", general_info.number_of_served_male_requests+general_info.number_of_served_female_requests, general_info.number_of_served_male_requests, general_info.number_of_served_female_requests);
 }

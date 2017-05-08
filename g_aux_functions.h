@@ -1,6 +1,8 @@
 #include <time.h>
 #include <pthread.h>
-#include "g_macros.h"
+
+#define OK 0
+#define ERROR -1
 
 typedef struct {
         //Read at startup
@@ -12,7 +14,7 @@ typedef struct {
         int requests_rejected_fd;
         int statistics_fd;
 
-        //Updated throughout program execution (to be written to statistics file)
+        //Updated throughout program execution
         int number_of_generated_male_requests;
         int number_of_generated_female_requests;
 
@@ -54,6 +56,12 @@ int write_to_statistics(request_info* request, const char* request_outcome);
 void close_entry_fd(); //TODO: Add verification to close() return value?
 void close_rejected_fd(); //TODO: Add verification to close() return value?
 void close_statistics_fd(); //TODO: Add verification to close() return value?
+
+void inc_number_of_generated_requests(request_info* request);
+void inc_number_of_rejected_requests(request_info* request);
+void inc_number_of_discarded_requests(request_info* request);
+
+void print_final_statistics();
 
 typedef struct {
         int first_index_free;

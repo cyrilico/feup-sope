@@ -76,6 +76,8 @@ void generate_request(){
 
         general_info.number_of_requests--;
 
+        inc_number_of_generated_requests(result);
+
         push_request(result);
 }
 
@@ -149,6 +151,32 @@ void close_rejected_fd(){
 
 void close_statistics_fd(){
         close(general_info.statistics_fd);
+}
+
+void inc_number_of_generated_requests(request_info* request){
+        if(request->gender == 'M')
+                general_info.number_of_generated_male_requests++;
+        else
+                general_info.number_of_generated_female_requests++;
+}
+
+void inc_number_of_rejected_requests(request_info* request){
+        if(request->gender == 'M')
+                general_info.number_of_rejected_male_requests++;
+        else
+                general_info.number_of_rejected_female_requests++;
+}
+void inc_number_of_discarded_requests(request_info* request){
+        if(request->gender == 'M')
+                general_info.number_of_discarded_male_requests++;
+        else
+                general_info.number_of_discarded_female_requests++;
+}
+
+void print_final_statistics(){
+        printf("Gerador: %d requests were generated, %d male and %d female\n", general_info.number_of_generated_male_requests+general_info.number_of_generated_female_requests, general_info.number_of_generated_male_requests, general_info.number_of_generated_female_requests);
+        printf("Gerador: %d requests were rejected by the sauna, %d male and %d female\n", general_info.number_of_rejected_male_requests+general_info.number_of_rejected_female_requests, general_info.number_of_rejected_male_requests, general_info.number_of_rejected_female_requests);
+        printf("Gerador: %d requests were discarded, %d male and %d female\n", general_info.number_of_discarded_male_requests+general_info.number_of_discarded_female_requests, general_info.number_of_discarded_male_requests, general_info.number_of_discarded_female_requests);
 }
 
 request_info* get_next_request(){
