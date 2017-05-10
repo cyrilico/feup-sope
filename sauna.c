@@ -43,9 +43,6 @@ int main(int argc, char** argv){
                 printf("Sauna: %s\n", strerror(errno));
                 exit(ERROR);
         }
-        int cenas;
-        sem_getvalue(&sauna_semaphore, &cenas);
-        printf("Teste : %d, %d\n", cenas, get_capacity());
 
         if(create_fifos() == ERROR)
                 exit(ERROR);
@@ -87,10 +84,10 @@ int main(int argc, char** argv){
                         if(write_to_statistics(current_request, "REJEITADO") == ERROR)
                                 printf("Sauna: %s\n", strerror(errno));
                         inc_number_of_rejected_requests(current_request);
-                        current_request->number_of_rejections++;
+                        if(++(current_request->number_of_rejections) < 3)
+                          inc_number_of_requests();
                         if(send_rejected(current_request) == ERROR)
                                 printf("Sauna: %s\n", strerror(errno));
-                        inc_number_of_requests();
                 }
                 else {
                         if(empty_sauna)

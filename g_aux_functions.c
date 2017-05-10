@@ -133,7 +133,7 @@ int read_reject(request_info* rejected){
 
 int write_to_statistics(request_info* request, const char* request_outcome){
         char output[100];
-        sprintf(output, "%.2f - %d - %d: %c - %d - %s\n", get_ms_since_startup(), getpid(), request->serial_number, request->gender, request->usage_time, request_outcome);
+        sprintf(output, "%10.2f - %04d - %03d: %c - %05d - %-10s\n", get_ms_since_startup(), getpid(), request->serial_number, request->gender, request->usage_time, request_outcome);
         if(write(general_info.statistics_fd, output, strlen(output)) == ERROR)
                 return ERROR;
         return OK;

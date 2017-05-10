@@ -120,7 +120,7 @@ int open_statistics_file(){
 
 int write_to_statistics(request_info* request, const char* request_outcome){
         char output[100];
-        sprintf(output, "%.2f - %d - %ld - %d: %c - %d - %s\n", get_ms_since_startup(), getpid(), pthread_self(), request->serial_number, request->gender, request->usage_time, request_outcome);
+        sprintf(output, "%10.2f - %04d - %015ld - %03d: %c - %05d - %-9s\n", get_ms_since_startup(), getpid(), pthread_self(), request->serial_number, request->gender, request->usage_time, request_outcome);
         if(write(general_info.statistics_fd, output, strlen(output)) == ERROR)
                 return ERROR;
         return OK;
