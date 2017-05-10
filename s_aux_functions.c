@@ -195,14 +195,14 @@ void inc_number_of_served_requests(request_info* request){
                 general_info.number_of_served_female_requests++;
 }
 
-int sort_statistics_file() {
+/*int sort_statistics_file() {
         char line[MAXLINE];
         FILE *fpin, *fsort;
         int FOUT_FILENO;
 
         char file[50];
         sprintf(file, "/tmp/bal.%d", getpid());
-        if((fpin = fopen(file, "r")) == ERROR)
+        if((fpin = fopen(file, "r")) == NULL)
                 return ERROR;
 
         sprintf(file, "/tmp/bal_sort.%d", getpid());
@@ -224,7 +224,9 @@ int sort_statistics_file() {
         pclose(fpin);
         pclose(fsort);
         close(FOUT_FILENO);
+        return OK;
 }
+*/
 
 void print_final_statistics(){
         printf("Sauna: %d requests were received, %d male and %d female\n", general_info.number_of_received_male_requests+general_info.number_of_received_female_requests, general_info.number_of_received_male_requests, general_info.number_of_received_female_requests);

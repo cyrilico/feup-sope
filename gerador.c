@@ -5,7 +5,6 @@
 #include <errno.h>
 #include <string.h>
 #include <time.h>
-#include <assert.h>
 #include "g_aux_functions.h"
 
 pthread_mutex_t queue_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -15,7 +14,7 @@ void* send_requests(void* nothing){
                 //If duplication fails, other thread has terminated which means sauna is ready to finish
                 int temp_fd;
                 if((temp_fd = dup(get_entry_fd())) == ERROR) {
-                        printf("Gerador: Entry FD closed, exiting thread\n");
+                        //printf("Gerador: Entry FD closed, exiting thread\n");
                         break;
                 }
                 else
@@ -27,7 +26,7 @@ void* send_requests(void* nothing){
                 pthread_mutex_unlock(&queue_mutex);
                 if(next_request == NULL)
                         continue;
-                printf("Gerador: Sending request %d\n", next_request->serial_number);
+                //printf("Gerador: Sending request %d\n", next_request->serial_number);
                 if(send_request(next_request) == ERROR) {
                         printf("Gerador3: %s\n", strerror(errno));
                         exit(ERROR);
@@ -102,9 +101,10 @@ int main(int argc, char** argv){
 
         close_statistics_fd();
 
-        printf("Gerador: Final queue size: %d\n", get_queue_size());
+        //printf("Gerador: Final queue size: %d\n", get_queue_size());
 
-        //TODO: Print final statistics
+        print_final_statistics();
+
         close_statistics_fd();
         exit(OK);
 }
