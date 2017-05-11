@@ -61,6 +61,7 @@ void inc_number_of_generated_requests(request_info* request);
 void inc_number_of_rejected_requests(request_info* request);
 void inc_number_of_discarded_requests(request_info* request);
 
+int sort_statistics_file();
 void print_final_statistics();
 
 typedef struct {

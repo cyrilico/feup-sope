@@ -104,5 +104,7 @@ int main(int argc, char** argv){
 
         close_statistics_fd();
 
+        sort_statistics_file();
+
         exit(OK);
 }

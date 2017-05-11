@@ -95,7 +95,7 @@ int open_fifos(){
 
 int open_statistics_file(){
         char file[50];
-        sprintf(file, "/tmp/ger.%d", getpid());
+        sprintf(file, "/tmp/ger_temp.%d", getpid());
         if((general_info.statistics_fd = open(file, O_WRONLY | O_CREAT | O_EXCL | O_SYNC, 0777)) == ERROR)
                 return ERROR;
         return OK;
@@ -177,6 +177,40 @@ void print_final_statistics(){
         printf("Gerador: %d requests were generated, %d male and %d female\n", general_info.number_of_generated_male_requests+general_info.number_of_generated_female_requests, general_info.number_of_generated_male_requests, general_info.number_of_generated_female_requests);
         printf("Gerador: %d requests were rejected by the sauna, %d male and %d female\n", general_info.number_of_rejected_male_requests+general_info.number_of_rejected_female_requests, general_info.number_of_rejected_male_requests, general_info.number_of_rejected_female_requests);
         printf("Gerador: %d requests were discarded, %d male and %d female\n", general_info.number_of_discarded_male_requests+general_info.number_of_discarded_female_requests, general_info.number_of_discarded_male_requests, general_info.number_of_discarded_female_requests);
+}
+
+int sort_statistics_file() {
+        char line[50];
+        char cmd[50];
+        FILE *fpin, *fsort;
+        int FOUT_FILENO;
+
+        char file[50];
+        sprintf(file, "/tmp/ger_temp.%d", getpid());
+        if((fpin = fopen(file, "r")) == NULL)
+                return ERROR;
+
+        sprintf(file, "/tmp/ger.%d", getpid());
+        if((FOUT_FILENO = open(file, O_WRONLY | O_CREAT | O_EXCL | O_SYNC, 0777)) == ERROR)
+                return ERROR;
+
+        // Opening sort "file" as pipe to write to
+        sprintf(cmd, "/usr/bin/sort -g >> %s", file);
+        if ((fsort = popen(cmd, "w")) == NULL) {
+                fprintf(stderr, "popen error");
+                return ERROR;
+        }
+
+        if(fork() == 0) {
+                dup2(FOUT_FILENO, STDOUT_FILENO);
+                while (fgets(line, 50, fpin) != NULL) // Reading line from input file
+                        fputs(line, fsort); // Writing line to sort
+        }
+
+        pclose(fpin);
+        pclose(fsort);
+        close(FOUT_FILENO);
+        return OK;
 }
 
 request_info* get_next_request(){

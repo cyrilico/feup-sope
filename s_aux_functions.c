@@ -9,8 +9,6 @@
 
 #define S_TO_MS 1e3
 #define NS_TO_MS 1e-6
-#define MAXLINE 50
-#define SORT "/usr/bin/sort"
 
 static sauna_info general_info;
 
@@ -112,7 +110,7 @@ int receive_number_of_requests(){
 
 int open_statistics_file(){
         char file[50];
-        sprintf(file, "/tmp/bal.%d", getpid());
+        sprintf(file, "/tmp/bal_temp.%d", getpid());
         if((general_info.statistics_fd = open(file, O_WRONLY | O_CREAT | O_EXCL | O_SYNC, 0777)) == ERROR)
                 return ERROR;
         return OK;
@@ -195,29 +193,31 @@ void inc_number_of_served_requests(request_info* request){
                 general_info.number_of_served_female_requests++;
 }
 
-/*int sort_statistics_file() {
-        char line[MAXLINE];
+int sort_statistics_file() {
+        char line[50];
+        char cmd[50];
         FILE *fpin, *fsort;
         int FOUT_FILENO;
 
         char file[50];
-        sprintf(file, "/tmp/bal.%d", getpid());
+        sprintf(file, "/tmp/bal_temp.%d", getpid());
         if((fpin = fopen(file, "r")) == NULL)
                 return ERROR;
 
-        sprintf(file, "/tmp/bal_sort.%d", getpid());
+        sprintf(file, "/tmp/bal.%d", getpid());
         if((FOUT_FILENO = open(file, O_WRONLY | O_CREAT | O_EXCL | O_SYNC, 0777)) == ERROR)
                 return ERROR;
 
         // Opening sort "file" as pipe to write to
-        if ((fsort = popen(SORT, "w")) == NULL) {
+        sprintf(cmd, "/usr/bin/sort -g >> %s", file);
+        if ((fsort = popen(cmd, "w")) == NULL) {
                 fprintf(stderr, "popen error");
                 return ERROR;
         }
 
         if(fork() == 0) {
-                dup2(STDOUT_FILENO, FOUT_FILENO);
-                while (fgets(line, MAXLINE, fpin) != NULL) // Reading line from input file
+                dup2(FOUT_FILENO, STDOUT_FILENO);
+                while (fgets(line, 50, fpin) != NULL) // Reading line from input file
                         fputs(line, fsort); // Writing line to sort
         }
 
@@ -226,7 +226,6 @@ void inc_number_of_served_requests(request_info* request){
         close(FOUT_FILENO);
         return OK;
 }
-*/
 
 void print_final_statistics(){
         printf("Sauna: %d requests were received, %d male and %d female\n", general_info.number_of_received_male_requests+general_info.number_of_received_female_requests, general_info.number_of_received_male_requests, general_info.number_of_received_female_requests);
