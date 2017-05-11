@@ -28,12 +28,12 @@ void* send_requests(void* nothing){
                         continue;
                 //printf("Gerador: Sending request %d\n", next_request->serial_number);
                 if(send_request(next_request) == ERROR) {
-                        printf("Gerador3: %s\n", strerror(errno));
+                        printf("Gerador: %s\n", strerror(errno));
                         exit(ERROR);
                 }
                 else{
                         if(write_to_statistics(next_request, "PEDIDO") == ERROR)
-                                printf("Gerador4: %s\n", strerror(errno));
+                                printf("Gerador: %s\n", strerror(errno));
                 }
         }
 
@@ -44,19 +44,19 @@ void* send_requests(void* nothing){
 void* process_rejected_requests(void* nothing){
         request_info* current_rejected = (request_info*)(malloc(sizeof(request_info)));
         while(read_reject(current_rejected) == OK) {
-                inc_number_of_rejected_requests(current_rejected); //TODO: CHECK: Being here we're counting a discarded rejection for the rejection count aswell. If we decide to not count it, just put this call inside below's 'if' brackets
                 //printf("Gerador: Received back request %d\n", current_rejected->serial_number);
                 if(current_rejected->number_of_rejections < 3) {
+                        inc_number_of_rejected_requests(current_rejected); //Not counting discarded requests as rejected
                         pthread_mutex_lock(&queue_mutex);
                         push_request(current_rejected);
                         pthread_mutex_unlock(&queue_mutex);
                         if(write_to_statistics(current_rejected, "REJEITADO") == ERROR)
-                                printf("Gerador2: %s\n", strerror(errno));
+                                printf("Gerador: %s\n", strerror(errno));
                 }
                 else{
                         inc_number_of_discarded_requests(current_rejected);
                         if(write_to_statistics(current_rejected, "DESCARTADO") == ERROR)
-                                printf("Gerador2: %s\n", strerror(errno));
+                                printf("Gerador: %s\n", strerror(errno));
                 }
 
                 current_rejected = (request_info*)(malloc(sizeof(request_info)));
@@ -80,15 +80,15 @@ int main(int argc, char** argv){
         if(open_fifos() == ERROR)
                 exit(ERROR);
 
-        printf("GERADOR-PID%d: BOTH FIFOS OPEN\n", getpid());
+        //printf("GERADOR-PID%d: BOTH FIFOS OPEN\n", getpid());
 
         if(open_statistics_file() == ERROR) {
-                printf("Gerador1: %s\n", strerror(errno));
+                printf("Gerador: %s\n", strerror(errno));
                 exit(ERROR);
         }
 
         if(send_number_of_requests() == ERROR) {
-                printf("Gerador5: %s\n", strerror(errno));
+                printf("Gerador: %s\n", strerror(errno));
                 exit(ERROR);
         }
 
@@ -100,8 +100,6 @@ int main(int argc, char** argv){
         pthread_join(generator_thread, NULL);
 
         close_statistics_fd();
-
-        //printf("Gerador: Final queue size: %d\n", get_queue_size());
 
         print_final_statistics();
 

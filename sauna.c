@@ -12,13 +12,10 @@ sem_t sauna_semaphore;
 
 void* accept_request(void* request){
         sem_wait(&sauna_semaphore); //Will wait for opening if sauna is full
-        int value;
-        sem_getvalue(&sauna_semaphore, &value);
-        printf("Sauna: Request #%d entered sauna, currently %d free spots\n", ((request_info*)request)->serial_number, value);
+        //printf("Sauna: Request #%d entered sauna\n", ((request_info*)request)->serial_number);
         usleep(((request_info*)request)->usage_time * MS_TO_MICROS);
         sem_post(&sauna_semaphore); //Notify there is another free place
-        sem_getvalue(&sauna_semaphore, &value);
-        printf("Sauna: Request #%d exited sauna, currently %d free spots\n", ((request_info*)request)->serial_number, value);
+        //printf("Sauna: Request #%d exited sauna\n", ((request_info*)request)->serial_number);
 
         inc_number_of_served_requests(((request_info*)request));
 
@@ -47,14 +44,14 @@ int main(int argc, char** argv){
         if(create_fifos() == ERROR)
                 exit(ERROR);
 
-        printf("SAUNA-PID%d: FIFOS CREATED\n", getpid());
+        //printf("SAUNA-PID%d: FIFOS CREATED\n", getpid());
 
         if(open_fifos() == ERROR) {
                 printf("Sauna: %s\n", strerror(errno));
                 exit(ERROR);
         }
 
-        printf("SAUNA-PID%d: BOTH FIFOS OPEN\n", getpid());
+        //printf("SAUNA-PID%d: BOTH FIFOS OPEN\n", getpid());
 
         if(open_statistics_file() == ERROR) {
                 printf("Sauna: %s\n", strerror(errno));
@@ -70,8 +67,8 @@ int main(int argc, char** argv){
         while(get_number_of_requests() > 0) {
                 if(read_request(current_request) == ERROR)
                         printf("Sauna: %s\n", strerror(errno));
+
                 inc_number_of_received_requests(current_request);
-                //printf("Sauna: Received request %d\n", ((request_info*)current_request)->serial_number);
                 dec_number_of_requests();
 
                 if(write_to_statistics(current_request, "RECEBIDO") == ERROR)

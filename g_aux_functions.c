@@ -197,7 +197,3 @@ void push_request(request_info* request){
         queue.requests_queue[queue.first_index_free] = request;
         queue.first_index_free++;
 }
-
-int get_queue_size(){
-        return queue.first_index_free;
-}

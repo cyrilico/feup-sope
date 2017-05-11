@@ -4,6 +4,7 @@
 
 #define OK 0
 #define ERROR -1
+#define MAX_THREADS 50000 //Hoping it's enough
 
 typedef struct {
         int capacity;
@@ -23,7 +24,7 @@ typedef struct {
         int number_of_served_female_requests;
 
         char current_gender_in_sauna;
-        pthread_t thread_ids[100]; //TODO: Use a macro here (max nr. of threads allowed per process?)
+        pthread_t thread_ids[MAX_THREADS];
         int thread_id_index;
 }sauna_info;
 
@@ -61,9 +62,9 @@ int send_rejected(request_info* rejected);
 
 void wait_for_threads();
 
-void close_entry_fd(); //TODO: Add verification to return value from close()?
-void close_statistics_fd(); //TODO: Add verification to return value from close()?
-void close_rejected_fd(); //TODO: Add verification to return value from close()?
+void close_entry_fd();
+void close_statistics_fd();
+void close_rejected_fd();
 
 void inc_number_of_received_requests(request_info* request);
 void inc_number_of_rejected_requests(request_info* request);

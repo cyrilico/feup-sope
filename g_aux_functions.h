@@ -31,7 +31,7 @@ typedef struct {
         int serial_number;
         int usage_time;
         char gender;
-        int number_of_rejections; //To control when to possibly discard the request
+        int number_of_rejections;
 }request_info;
 
 double get_ms_since_startup();
@@ -53,9 +53,9 @@ int read_reject(request_info* rejected);
 
 int write_to_statistics(request_info* request, const char* request_outcome);
 
-void close_entry_fd(); //TODO: Add verification to close() return value?
-void close_rejected_fd(); //TODO: Add verification to close() return value?
-void close_statistics_fd(); //TODO: Add verification to close() return value?
+void close_entry_fd();
+void close_rejected_fd();
+void close_statistics_fd();
 
 void inc_number_of_generated_requests(request_info* request);
 void inc_number_of_rejected_requests(request_info* request);
@@ -70,4 +70,3 @@ typedef struct {
 
 request_info* get_next_request();
 void push_request(request_info* request);
-int get_queue_size(); //Necessary??

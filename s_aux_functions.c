@@ -135,7 +135,7 @@ void set_current_valid_gender(char gender){
 }
 
 pthread_t* get_free_thread_id_pointer(){
-        if(general_info.thread_id_index == 100) //TODO: Use macro here (same one as in header file for array)
+        if(general_info.thread_id_index == MAX_THREADS)
                 return NULL;
 
         pthread_t* result = &general_info.thread_ids[general_info.thread_id_index];
